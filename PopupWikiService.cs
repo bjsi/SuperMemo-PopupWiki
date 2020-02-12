@@ -37,7 +37,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
     {
       string url = $"{RestApiBaseUrl}page/summary/{ParseTitle(title)}";
       string res = await SendHttpGetRequest(url);
-      return (Summary)JsonConvert.DeserializeObject(res);
+      return JsonConvert.DeserializeObject<Summary>(res);
     }
 
     public async Task<string> GetExtract(string title)
@@ -66,7 +66,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
                    $"&exlimit={exlimit}";
 
       string res = await SendHttpGetRequest(url);
-      Extract extract = (Extract)JsonConvert.DeserializeObject(res);
+      Extract extract = JsonConvert.DeserializeObject<Extract>(res);
       string extract_html = extract.query.pages[0].extract;
       string filled_html =
         $"<html lang=\"en\">" +
@@ -74,13 +74,13 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
           $"<meta charset=\"utf-8\"/>" +
           $"<meta" +
               $"name=\"viewport\"" +
-              $"content = \"width=device-width, initial-scale=1, shrink-to-fit=no\"" +
+              $"content=\"width=device-width, initial-scale=1, shrink-to-fit=no\"" +
           $"/>" +
           $"<link" +
               $"href=\"https://fonts.googleapis.com/css?family=Lato&display=swap\"" +
               $"rel=\"stylesheet\"/>" +
           $"<link rel=\"stylesheet\" href=\"css/bootstrap.min.css\"/>" +
-          $"<title>{summary.displaytitle}</ title >" +
+          $"<title>{summary.displaytitle}</title>" +
         $"</head>" +
         $"<div>";
 
@@ -92,8 +92,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
                    $"alt=\"{summary.displaytitle}_img\"" +
                    $"style=\"width:{summary.thumbnail.width}px;" +
                            $"height: {summary.thumbnail.height}px;" +
-                           $"float:right; margin - left:7px; margin - bottom:5px;" +
-              $">";
+                           $"float:right; margin - left:7px; margin - bottom:5px;\" />";
       }
 
       // TODO add content urls to go to the full article
@@ -102,9 +101,10 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
         $"<span style=\"font-size: 20px;\">" +
           $"<b>{summary.displaytitle}</b></span>" +
           $"{(string.IsNullOrEmpty(extract_html) ? $"No extract found for {title}" : $"{extract_html}")}" +
-      $"</div>";
+      $"</div>" +
+      $"</html>";
         
-      return $"<div class=\"wiki-result\">{filled_html}</div>";
+      return filled_html;
 
     }
 

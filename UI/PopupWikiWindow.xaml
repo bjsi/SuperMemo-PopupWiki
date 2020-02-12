@@ -25,8 +25,11 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <WebBrowser Name="Browser"
-                    Grid.Row="0"
-                    HorizontalAlignment="Stretch" />
+        <Grid Grid.Row="0">
+
+            <WebBrowser Name="Browser"
+                        Grid.Row="0"
+                        HorizontalAlignment="Stretch"/>
+      </Grid>
     </Grid>
 </mah:MetroWindow>

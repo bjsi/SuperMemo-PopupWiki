@@ -9,10 +9,10 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
   /// </summary>
   public partial class PopupWikiWindow
   {
+
     public PopupWikiWindow(PopupWikiService wikiService, string html)
     {
       InitializeComponent();
-      Console.WriteLine("Browser navigating to:");
       Console.WriteLine(html);
       Browser.NavigateToString(html);
     }
