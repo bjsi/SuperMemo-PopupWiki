@@ -1,0 +1,504 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Serilog.Exceptions</name>
+    </assembly>
+    <members>
+        <member name="T:Serilog.Exceptions.Core.DestructuringOptionsBuilder">
+            <summary>
+            Accumulates destructuring options to be used by the <see cref="T:Serilog.Exceptions.Core.ExceptionEnricher"/>.
+            </summary>
+        </member>
+        <member name="F:Serilog.Exceptions.Core.DestructuringOptionsBuilder.DefaultDestructurers">
+            <summary>
+            Default set of destructurers. Destructurers cover all of the exceptions from standard library.
+            </summary>
+        </member>
+        <member name="F:Serilog.Exceptions.Core.DestructuringOptionsBuilder.IgnoreStackTraceAndTargetSiteExceptionFilter">
+            <summary>
+            Filter that ignores <see cref="P:System.Exception.StackTrace"/> and Exception.TargetSite properties.
+            Usually, they can be safely ignored, because Serilog attaches them tog <see cref="T:Serilog.Events.LogEvent"/> already.
+            </summary>
+        </member>
+        <member name="P:Serilog.Exceptions.Core.DestructuringOptionsBuilder.RootName">
+            <summary>
+            Gets the name of the property which value will be filled with destructured exception.
+            </summary>
+        </member>
+        <member name="P:Serilog.Exceptions.Core.DestructuringOptionsBuilder.DestructuringDepth">
+            <summary>
+            Gets the maximum depth of destructuring to which reflection destructurer will proceed.
+            </summary>
+        </member>
+        <member name="P:Serilog.Exceptions.Core.DestructuringOptionsBuilder.DisableReflectionBasedDestructurer">
+            <summary>
+            Gets a value indicating whether to disable the reflection based destructurer.
+            </summary>
+        </member>
+        <member name="P:Serilog.Exceptions.Core.DestructuringOptionsBuilder.Destructurers">
+            <summary>
+            Gets a collection of destructurers that will be used to handle exception.
+            </summary>
+        </member>
+        <member name="P:Serilog.Exceptions.Core.DestructuringOptionsBuilder.Filter">
+            <summary>
+            Gets a global filter, that will be applied to every destructured property just before it is added to the result.
+            </summary>
+        </member>
+        <member name="M:Serilog.Exceptions.Core.DestructuringOptionsBuilder.WithDestructurers(System.Collections.Generic.IEnumerable{Serilog.Exceptions.Destructurers.IExceptionDestructurer})">
+            <summary>
+            Accumulates destructurers to be used by <see cref="T:Serilog.Exceptions.Core.ExceptionEnricher"/>.
+            </summary>
+            <param name="destructurers">Collection of destructurers.</param>
+            <returns>Options builder for method chaining.</returns>
+        </member>
+        <member name="M:Serilog.Exceptions.Core.DestructuringOptionsBuilder.WithDefaultDestructurers">
+            <summary>
+            Adds destructurers for a known set of exceptions from standard library.
+            </summary>
+            <returns>Options builder for method chaining.</returns>
+        </member>
+        <member name="M:Serilog.Exceptions.Core.DestructuringOptionsBuilder.WithFilter(Serilog.Exceptions.Filters.IExceptionPropertyFilter)">
+            <summary>
+            Sets a filter that will be used by <see cref="T:Serilog.Exceptions.Core.ExceptionEnricher"/>. Only one filter can be set, second
+            invocation of this method throws <see cref="T:System.InvalidOperationException"/>.
+            </summary>
+            <param name="filter">The filter.</param>
+            <returns>Options builder for method chaining.</returns>
+        </member>
+        <member name="M:Serilog.Exceptions.Core.DestructuringOptionsBuilder.WithIgnoreStackTraceAndTargetSiteExceptionFilter">
+            <summary>
+            Sets a filter that will be used by <see cref="T:Serilog.Exceptions.Core.ExceptionEnricher"/>. The filter ignores
+            <see cref="P:System.Exception.StackTrace"/> and Exception.TargetSite properties. Only one filter can
+            be set, second invocation of this method throws <see cref="T:System.InvalidOperationException"/>.
+            </summary>
+            <returns>Options builder for method chaining.</returns>
+        </member>
+        <member name="M:Serilog.Exceptions.Core.DestructuringOptionsBuilder.WithRootName(System.String)">
+            <summary>
+            Sets a property name that will be used by <see cref="T:Serilog.Exceptions.Core.ExceptionEnricher"/>.
+            </summary>
+            <param name="rootName">The name of root property.</param>
+            <returns>Options builder for method chaining.</returns>
+            <exception cref="T:System.ArgumentException">Name cannot be null or empty.</exception>
+        </member>
+        <member name="M:Serilog.Exceptions.Core.DestructuringOptionsBuilder.WithDestructuringDepth(System.Int32)">
+            <summary>
+            Sets a maximum destructuring depth that <see cref="T:Serilog.Exceptions.Core.ExceptionEnricher"/> will reach during destructuring of
+            unknown exception type.
+            </summary>
+            <param name="destructuringDepth">Maximum depth, must be positive.</param>
+            <returns>Options builder for method chaining.</returns>
+            <exception cref="T:System.ArgumentOutOfRangeException">Given depth must be positive.</exception>
+        </member>
+        <member name="M:Serilog.Exceptions.Core.DestructuringOptionsBuilder.WithoutReflectionBasedDestructurer">
+            <summary>
+            Disable reflection based destructurer.
+            You may want to disable this destructurer if you need full control
+            over the process of destructuring and want to provide all the destructurers yourself.
+            </summary>
+            <returns>Options builder for method chaining.</returns>
+        </member>
+        <member name="T:Serilog.Exceptions.Core.ExceptionEnricher">
+            <summary>
+            Enrich a <see cref="T:Serilog.Events.LogEvent"/> with details about an <see cref="P:Serilog.Events.LogEvent.Exception"/> if present.
+            </summary>
+        </member>
+        <member name="M:Serilog.Exceptions.Core.ExceptionEnricher.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Serilog.Exceptions.Core.ExceptionEnricher"/> class.
+            </summary>
+        </member>
+        <member name="M:Serilog.Exceptions.Core.ExceptionEnricher.#ctor(Serilog.Exceptions.Core.IDestructuringOptions)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Serilog.Exceptions.Core.ExceptionEnricher"/> class.
+            </summary>
+            <param name="destructuringOptions">The destructuring options, cannot be null.</param>
+        </member>
+        <member name="M:Serilog.Exceptions.Core.ExceptionEnricher.Enrich(Serilog.Events.LogEvent,Serilog.Core.ILogEventPropertyFactory)">
+            <summary>
+            Enriches <paramref name="logEvent"/> with a destructured exception's properties. If the exception is not
+            present, no action is taken.
+            </summary>
+            <param name="logEvent">Log event that will be enriched.</param>
+            <param name="propertyFactory">The property factory.</param>
+        </member>
+        <member name="T:Serilog.Exceptions.Core.ExceptionPropertiesBag">
+            <inheritdoc />
+        </member>
+        <member name="F:Serilog.Exceptions.Core.ExceptionPropertiesBag.resultsCollected">
+            <summary>
+            We keep a note on whether the results were collected to be sure that after that there are no changes. This
+            is the application of fail-fast principle.
+            </summary>
+        </member>
+        <member name="M:Serilog.Exceptions.Core.ExceptionPropertiesBag.#ctor(System.Exception,Serilog.Exceptions.Filters.IExceptionPropertyFilter)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Serilog.Exceptions.Core.ExceptionPropertiesBag"/> class.
+            </summary>
+            <param name="exception">The exception which properties will be added to the bag.</param>
+            <param name="filter">Filter that should be applied to each property just before adding it to the bag.</param>
+        </member>
+        <member name="M:Serilog.Exceptions.Core.ExceptionPropertiesBag.GetResultDictionary">
+            <inheritdoc />
+        </member>
+        <member name="M:Serilog.Exceptions.Core.ExceptionPropertiesBag.AddProperty(System.String,System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:Serilog.Exceptions.Core.ExceptionPropertiesBag.ContainsProperty(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="T:Serilog.Exceptions.Core.IDestructuringOptions">
+            <summary>
+            Represents all the configuration options user can specify to influence the destructuring process.
+            </summary>
+        </member>
+        <member name="P:Serilog.Exceptions.Core.IDestructuringOptions.RootName">
+            <summary>
+            Gets the name of the key dictionary to which destructured exception will be assigned. Default is
+            <c>"ExceptionDetail"</c>.
+            </summary>
+        </member>
+        <member name="P:Serilog.Exceptions.Core.IDestructuringOptions.DestructuringDepth">
+            <summary>
+            Gets the depth at which reflection based destructurer will stop recursive process of children destructuring.
+            Default is <c>10</c>.
+            </summary>
+        </member>
+        <member name="P:Serilog.Exceptions.Core.IDestructuringOptions.Destructurers">
+            <summary>
+            Gets the collection of destructurers that will be used to destructure incoming exceptions. If none of the
+            destructurers can handle given type of exception, a generic, reflection-based destructurer will be used.
+            </summary>
+        </member>
+        <member name="P:Serilog.Exceptions.Core.IDestructuringOptions.Filter">
+            <summary>
+            Gets the optional filter that will evaluate and possibly reject each destructured property just before
+            they are about to be written to a result structure. If no filter is set no properties are going to be
+            rejected. Filter is applied to every property regardless of which destructurer was used.
+            </summary>
+        </member>
+        <member name="P:Serilog.Exceptions.Core.IDestructuringOptions.DisableReflectionBasedDestructurer">
+            <summary>
+            Gets a value indicating whether to disable the reflection based destructurer.
+            You may want to disable this destructurer if you need full control
+            over the process of destructuring and want to provide all the destructurers yourself.
+            </summary>
+        </member>
+        <member name="T:Serilog.Exceptions.Core.IExceptionPropertiesBag">
+            <summary>
+            Container for all properties of single exception instance. All properties must be added before result
+            dictionary is requested.
+            </summary>
+        </member>
+        <member name="M:Serilog.Exceptions.Core.IExceptionPropertiesBag.GetResultDictionary">
+            <summary>
+            Results should be collected only once, after all the properties were added using <see cref="M:Serilog.Exceptions.Core.IExceptionPropertiesBag.AddProperty(System.String,System.Object)"/>
+            method.
+            </summary>
+            <returns>Dictionary with all the properties names and values that were added.</returns>
+        </member>
+        <member name="M:Serilog.Exceptions.Core.IExceptionPropertiesBag.AddProperty(System.String,System.Object)">
+            <summary>
+            Adds a property to the bag.
+            </summary>
+            <param name="key">The key.</param>
+            <param name="value">The value.</param>
+        </member>
+        <member name="M:Serilog.Exceptions.Core.IExceptionPropertiesBag.ContainsProperty(System.String)">
+            <summary>
+            Returns <c>true</c> if given key is already present in the bag.
+            </summary>
+            <param name="key">The key.</param>
+            <returns>True if given key is already present.</returns>
+        </member>
+        <member name="T:Serilog.Exceptions.Destructurers.AggregateExceptionDestructurer">
+            <summary>
+            Destructurer for <see cref="T:System.AggregateException"/>.
+            </summary>
+        </member>
+        <member name="P:Serilog.Exceptions.Destructurers.AggregateExceptionDestructurer.TargetTypes">
+            <inheritdoc cref="P:Serilog.Exceptions.Destructurers.IExceptionDestructurer.TargetTypes"/>
+        </member>
+        <member name="M:Serilog.Exceptions.Destructurers.AggregateExceptionDestructurer.Destructure(System.Exception,Serilog.Exceptions.Core.IExceptionPropertiesBag,System.Func{System.Exception,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object}})">
+            <inheritdoc cref="M:Serilog.Exceptions.Destructurers.IExceptionDestructurer.Destructure(System.Exception,Serilog.Exceptions.Core.IExceptionPropertiesBag,System.Func{System.Exception,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object}})"/>
+        </member>
+        <member name="T:Serilog.Exceptions.Destructurers.ArgumentExceptionDestructurer">
+            <summary>
+            Destructurer for <see cref="T:System.ArgumentException"/>.
+            </summary>
+        </member>
+        <member name="P:Serilog.Exceptions.Destructurers.ArgumentExceptionDestructurer.TargetTypes">
+            <inheritdoc cref="P:Serilog.Exceptions.Destructurers.IExceptionDestructurer.TargetTypes"/>
+        </member>
+        <member name="M:Serilog.Exceptions.Destructurers.ArgumentExceptionDestructurer.Destructure(System.Exception,Serilog.Exceptions.Core.IExceptionPropertiesBag,System.Func{System.Exception,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object}})">
+            <inheritdoc cref="M:Serilog.Exceptions.Destructurers.IExceptionDestructurer.Destructure(System.Exception,Serilog.Exceptions.Core.IExceptionPropertiesBag,System.Func{System.Exception,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object}})"/>
+        </member>
+        <member name="T:Serilog.Exceptions.Destructurers.ArgumentOutOfRangeExceptionDestructurer">
+            <summary>
+            Destructurer for <see cref="T:System.ArgumentOutOfRangeException"/>.
+            </summary>
+        </member>
+        <member name="P:Serilog.Exceptions.Destructurers.ArgumentOutOfRangeExceptionDestructurer.TargetTypes">
+            <inheritdoc cref="P:Serilog.Exceptions.Destructurers.IExceptionDestructurer.TargetTypes"/>
+        </member>
+        <member name="M:Serilog.Exceptions.Destructurers.ArgumentOutOfRangeExceptionDestructurer.Destructure(System.Exception,Serilog.Exceptions.Core.IExceptionPropertiesBag,System.Func{System.Exception,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object}})">
+            <inheritdoc cref="M:Serilog.Exceptions.Destructurers.IExceptionDestructurer.Destructure(System.Exception,Serilog.Exceptions.Core.IExceptionPropertiesBag,System.Func{System.Exception,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object}})"/>
+        </member>
+        <member name="T:Serilog.Exceptions.Destructurers.ExceptionDestructurer">
+            <summary>
+            Base class for more specific destructurers.
+            It destructures all the standard properties that every <see cref="T:System.Exception"/> has.
+            </summary>
+        </member>
+        <member name="P:Serilog.Exceptions.Destructurers.ExceptionDestructurer.TargetTypes">
+            <summary>
+            Gets a collection of exceptions types from standard library that do not have any custom property,
+            so they can be destructured using generic exception destructurer.
+            </summary>
+        </member>
+        <member name="M:Serilog.Exceptions.Destructurers.ExceptionDestructurer.Destructure(System.Exception,Serilog.Exceptions.Core.IExceptionPropertiesBag,System.Func{System.Exception,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object}})">
+            <inheritdoc cref="M:Serilog.Exceptions.Destructurers.IExceptionDestructurer.Destructure(System.Exception,Serilog.Exceptions.Core.IExceptionPropertiesBag,System.Func{System.Exception,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object}})"/>
+        </member>
+        <member name="M:Serilog.Exceptions.Destructurers.ExceptionDestructurer.DestructureCommonExceptionProperties(System.Exception,Serilog.Exceptions.Core.IExceptionPropertiesBag,System.Func{System.Exception,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object}},System.Func{System.Collections.IDictionary,System.Object})">
+            <summary>
+            Destructures public properties of <see cref="T:System.Exception"/>.
+            Omits less frequently used ones if they are null.
+            </summary>
+            <param name="exception">The exception that will be destructured.</param>
+            <param name="propertiesBag">The bag when destructured properties will be put.</param>
+            <param name="innerDestructure">Function that can be used to destructure inner exceptions if there are any.</param>
+            <param name="destructureDataProperty">Injected function for destructuring <see cref="P:System.Exception.Data"/>.</param>
+        </member>
+        <member name="M:Serilog.Exceptions.Destructurers.ExceptionDestructurer.GetNotHandledByMonoTypes">
+            <summary>
+            Get types that are currently not handled by mono and could raise a LoadTypeException.
+            </summary>
+            <returns>List of type names.</returns>
+        </member>
+        <member name="T:Serilog.Exceptions.Destructurers.IExceptionDestructurer">
+            <summary>
+            Interface that all exception destructurers that want to be registered must implement. Exception destructurer
+            must explicitly declare which types it can destructure using <see cref="P:Serilog.Exceptions.Destructurers.IExceptionDestructurer.TargetTypes"/> property.
+            </summary>
+        </member>
+        <member name="P:Serilog.Exceptions.Destructurers.IExceptionDestructurer.TargetTypes">
+            <summary>
+            Gets a collection of types of exception that the destructurer can handle.
+            </summary>
+        </member>
+        <member name="M:Serilog.Exceptions.Destructurers.IExceptionDestructurer.Destructure(System.Exception,Serilog.Exceptions.Core.IExceptionPropertiesBag,System.Func{System.Exception,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object}})">
+            <summary>
+            Destructures given <paramref name="exception"/>. It's properties are to be put in
+            <paramref name="propertiesBag"/>.
+            </summary>
+            <param name="exception">The exception that will be destructured.</param>
+            <param name="propertiesBag">The bag when destructured properties will be put.</param>
+            <param name="destructureException">Function that can be used to destructure inner exceptions if there are
+            any.</param>
+        </member>
+        <member name="T:Serilog.Exceptions.Destructurers.OperationCanceledExceptionDestructurer">
+            <summary>
+            Destructurer for <see cref="T:System.OperationCanceledException"/>.
+            </summary>
+        </member>
+        <member name="P:Serilog.Exceptions.Destructurers.OperationCanceledExceptionDestructurer.TargetTypes">
+            <inheritdoc cref="P:Serilog.Exceptions.Destructurers.IExceptionDestructurer.TargetTypes"/>
+        </member>
+        <member name="M:Serilog.Exceptions.Destructurers.OperationCanceledExceptionDestructurer.Destructure(System.Exception,Serilog.Exceptions.Core.IExceptionPropertiesBag,System.Func{System.Exception,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object}})">
+            <inheritdoc cref="M:Serilog.Exceptions.Destructurers.IExceptionDestructurer.Destructure(System.Exception,Serilog.Exceptions.Core.IExceptionPropertiesBag,System.Func{System.Exception,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object}})"/>
+        </member>
+        <member name="M:Serilog.Exceptions.Destructurers.OperationCanceledExceptionDestructurer.DestructureCancellationToken(System.Threading.CancellationToken@)">
+            <summary>
+            Destructures the cancellation token.
+            </summary>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>The destructured cancellation token.</returns>
+        </member>
+        <member name="T:Serilog.Exceptions.Destructurers.ReflectionBasedDestructurer">
+            <summary>
+            Destructures exceptions by gathering all public non-indexer properties using reflection and then dynamically
+            retrieving their values. This class can handle every exception including those with circular references and
+            throwing properties. Additionally, a "Type" property is added to let the user know exact type of destructured
+            exception.
+            </summary>
+        </member>
+        <member name="M:Serilog.Exceptions.Destructurers.ReflectionBasedDestructurer.#ctor(System.Int32)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Serilog.Exceptions.Destructurers.ReflectionBasedDestructurer"/> class.
+            </summary>
+            <param name="destructuringDepth">Maximum depth to which destructurer will go when destructuring exception
+            object graph.</param>
+        </member>
+        <member name="P:Serilog.Exceptions.Destructurers.ReflectionBasedDestructurer.TargetTypes">
+            <inheritdoc cref="P:Serilog.Exceptions.Destructurers.IExceptionDestructurer.TargetTypes"/>
+        </member>
+        <member name="M:Serilog.Exceptions.Destructurers.ReflectionBasedDestructurer.Destructure(System.Exception,Serilog.Exceptions.Core.IExceptionPropertiesBag,System.Func{System.Exception,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object}})">
+            <inheritdoc cref="M:Serilog.Exceptions.Destructurers.IExceptionDestructurer.Destructure(System.Exception,Serilog.Exceptions.Core.IExceptionPropertiesBag,System.Func{System.Exception,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object}})"/>
+        </member>
+        <member name="T:Serilog.Exceptions.Destructurers.ReflectionTypeLoadExceptionDestructurer">
+            <summary>
+            Destructurer for <see cref="T:System.Reflection.ReflectionTypeLoadException"/>.
+            </summary>
+        </member>
+        <member name="P:Serilog.Exceptions.Destructurers.ReflectionTypeLoadExceptionDestructurer.TargetTypes">
+            <inheritdoc cref="P:Serilog.Exceptions.Destructurers.IExceptionDestructurer.TargetTypes"/>
+        </member>
+        <member name="M:Serilog.Exceptions.Destructurers.ReflectionTypeLoadExceptionDestructurer.Destructure(System.Exception,Serilog.Exceptions.Core.IExceptionPropertiesBag,System.Func{System.Exception,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object}})">
+            <inheritdoc cref="M:Serilog.Exceptions.Destructurers.IExceptionDestructurer.Destructure(System.Exception,Serilog.Exceptions.Core.IExceptionPropertiesBag,System.Func{System.Exception,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object}})"/>
+        </member>
+        <member name="T:Serilog.Exceptions.Destructurers.TaskCanceledExceptionDestructurer">
+            <summary>
+            Destructurer for <see cref="T:System.Threading.Tasks.TaskCanceledException"/>.
+            </summary>
+        </member>
+        <member name="P:Serilog.Exceptions.Destructurers.TaskCanceledExceptionDestructurer.TargetTypes">
+            <inheritdoc cref="P:Serilog.Exceptions.Destructurers.IExceptionDestructurer.TargetTypes"/>
+        </member>
+        <member name="M:Serilog.Exceptions.Destructurers.TaskCanceledExceptionDestructurer.Destructure(System.Exception,Serilog.Exceptions.Core.IExceptionPropertiesBag,System.Func{System.Exception,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object}})">
+            <inheritdoc cref="M:Serilog.Exceptions.Destructurers.IExceptionDestructurer.Destructure(System.Exception,Serilog.Exceptions.Core.IExceptionPropertiesBag,System.Func{System.Exception,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object}})"/>
+        </member>
+        <member name="M:Serilog.Exceptions.Destructurers.TaskCanceledExceptionDestructurer.DestructureTask(System.Threading.Tasks.Task,System.Func{System.Exception,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object}})">
+            <summary>
+            Destructures the specified task.
+            </summary>
+            <param name="task">The task.</param>
+            <param name="innerDestructure">The inner destructure.</param>
+            <returns>The destructured task.</returns>
+        </member>
+        <member name="T:Serilog.Exceptions.DictionaryExtensions">
+            <summary>
+            Helper extension methods for specific dictionary operations.
+            </summary>
+        </member>
+        <member name="M:Serilog.Exceptions.DictionaryExtensions.ToStringObjectDictionary(System.Collections.IDictionary)">
+            <summary>
+            Converts a dictionary to another one with string-ified keys.
+            </summary>
+            <param name="dictionary">The input dictionary.</param>
+            <returns>A dictionary with string-ified keys.</returns>
+        </member>
+        <member name="T:Serilog.Exceptions.Filters.CompositeExceptionPropertyFilter">
+            <summary>
+            Abstraction over collection of filters that filters property is any of given filters alone would filter it.
+            This is equivalent to OR over a set of booleans. Executes filters in the order they were passed to a
+            constructor.
+            </summary>
+        </member>
+        <member name="M:Serilog.Exceptions.Filters.CompositeExceptionPropertyFilter.#ctor(Serilog.Exceptions.Filters.IExceptionPropertyFilter[])">
+            <summary>
+            Initializes a new instance of the <see cref="T:Serilog.Exceptions.Filters.CompositeExceptionPropertyFilter"/> class.
+            </summary>
+            <param name="filters">The filters.</param>
+            <exception cref="T:System.ArgumentNullException">filters was <c>null</c>.</exception>
+            <exception cref="T:System.ArgumentException">filters was empty or filter at index {i} is <c>null</c>.</exception>
+        </member>
+        <member name="M:Serilog.Exceptions.Filters.CompositeExceptionPropertyFilter.ShouldPropertyBeFiltered(System.Exception,System.String,System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="T:Serilog.Exceptions.Filters.IExceptionPropertyFilter">
+            <summary>
+            Interface used for filtering exception properties. Filtering process is global, each property of every
+            exception will go through a configured exception property filter.
+            </summary>
+        </member>
+        <member name="M:Serilog.Exceptions.Filters.IExceptionPropertyFilter.ShouldPropertyBeFiltered(System.Exception,System.String,System.Object)">
+            <summary>
+            Called after the property was discovered and destructured but just before it is added to results.
+            </summary>
+            <param name="exception">Exception for which properties are filtered.</param>
+            <param name="propertyName">Name of the property.</param>
+            <param name="value">Destructured value of the property.</param>
+            <returns>Boolean flag indicating whether property will be rejected.</returns>
+        </member>
+        <member name="T:Serilog.Exceptions.Filters.IgnorePropertyByNameExceptionFilter">
+            <summary>
+            Filters the exception properties based only on their name. If exception property matches any of provided
+            property names, exception property is ignored altogether. Comparison method is exact case-sensitive.
+            </summary>
+        </member>
+        <member name="F:Serilog.Exceptions.Filters.IgnorePropertyByNameExceptionFilter.propertiesToIgnore">
+            <summary>
+            The usage of array instead of HashSet is dictated by the assumption
+            that there will be only small number of properties to ignore and for such
+            case array is much faster than HashSet.
+            </summary>
+        </member>
+        <member name="M:Serilog.Exceptions.Filters.IgnorePropertyByNameExceptionFilter.#ctor(System.String[])">
+            <summary>
+            Initializes a new instance of the <see cref="T:Serilog.Exceptions.Filters.IgnorePropertyByNameExceptionFilter"/> class.
+            </summary>
+            <param name="propertiesToIgnore">The properties to ignore.</param>
+        </member>
+        <member name="M:Serilog.Exceptions.Filters.IgnorePropertyByNameExceptionFilter.ShouldPropertyBeFiltered(System.Exception,System.String,System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="T:Serilog.Exceptions.LoggerEnrichmentConfigurationExtensions">
+            <summary>
+            Serilog logger enrichment extension methods.
+            </summary>
+        </member>
+        <member name="M:Serilog.Exceptions.LoggerEnrichmentConfigurationExtensions.WithExceptionDetails(Serilog.Configuration.LoggerEnrichmentConfiguration)">
+            <summary>
+            Enrich logger output with a destructured object containing exception's public properties. Default
+            destructurers are registered. <see cref="P:System.Exception.StackTrace"/> and Exception.TargetSite
+            are omitted by the destructuring process because Serilog already attaches them to log event.
+            </summary>
+            <param name="loggerEnrichmentConfiguration">The enrichment configuration.</param>
+            <returns>Configuration object allowing method chaining.</returns>
+        </member>
+        <member name="M:Serilog.Exceptions.LoggerEnrichmentConfigurationExtensions.WithExceptionDetails(Serilog.Configuration.LoggerEnrichmentConfiguration,Serilog.Exceptions.Core.IDestructuringOptions)">
+            <summary>
+            Enrich logger output with a destuctured object containing exception's public properties.
+            </summary>
+            <param name="loggerEnrichmentConfiguration">The enrichment configuration.</param>
+            <param name="destructuringOptions">
+            Options that will influence the process of destructuring exception's properties into result object.
+            </param>
+            <returns>Configuration object allowing method chaining.</returns>
+        </member>
+        <member name="T:Serilog.Exceptions.Resources">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="P:Serilog.Exceptions.Resources.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:Serilog.Exceptions.Resources.Culture">
+            <summary>
+              Overrides the current thread's CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:Serilog.Exceptions.Resources.CannotBeEmpty">
+            <summary>
+              Looks up a localized string similar to Cannot be empty..
+            </summary>
+        </member>
+        <member name="P:Serilog.Exceptions.Resources.DestructuringDepthMustBeMoreThanZero">
+            <summary>
+              Looks up a localized string similar to Destructuring depth must be more than zero..
+            </summary>
+        </member>
+        <member name="P:Serilog.Exceptions.Resources.FilterAlreadySet">
+            <summary>
+              Looks up a localized string similar to Filter was already set, only one filter can be configured. Use {0} or other aggregate to combine filters..
+            </summary>
+        </member>
+        <member name="T:Serilog.Exceptions.TypeExtensions">
+            <summary>
+            Helper methods for <see cref="T:System.Type"/> class.
+            </summary>
+        </member>
+        <member name="M:Serilog.Exceptions.TypeExtensions.GetTypeCode(System.Type)">
+            <summary>
+            Helper method that return type codes. Fills a missing method in netstandard1.3.
+            </summary>
+            <param name="type">The input type.</param>
+            <returns>The type code.</returns>
+        </member>
+    </members>
+</doc>
