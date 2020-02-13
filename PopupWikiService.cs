@@ -33,65 +33,71 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
       _httpClient?.Dispose();
     }
 
-    public async Task<Summary> GetSummary(string title)
-    {
-      string url = $"{RestApiBaseUrl}page/summary/{ParseTitle(title)}";
-      string res = await SendHttpGetRequest(url);
-      return JsonConvert.DeserializeObject<Summary>(res);
-    }
-
     public async Task<string> GetExtract(string title)
     {
-      Summary summary = await GetSummary(title);
-      //Summary parsedSummary = SummaryParser(summary);
-
-      /// TODO parse summary
-
       string action = "query";
       string format = "json";
-      int formatversion = 2;
-      string prop = "extracts";
+      string errorformat = "bc";
+      string prop = "description|extracts|pageimages";
+      string list = "";
+      string meta = "";
+      int utf8 = 1;
+      string formatversion = "latest";
+      int indexpageids = 1;
+      string piprop = "thumbnail|name|original";
+      int pithumbsize = 400;
       int exchars = 1200;
       bool exintro = true;
       int exlimit = 1;
 
       string url = $"{MediaWikiApiBaseUrl}" +
                    $"?action={action}" +
-                   $"&prop={prop}" +
-                   $"&titles={title}" +
                    $"&format={format}" +
+                   $"&errorformat={errorformat}" +
+                   $"&prop={prop}" +
+                   $"&list={list}" +
+                   $"&meta={meta}" +
+                   $"&utf8={utf8}" +
                    $"&formatversion={formatversion}" +
+                   $"&indexpageids={indexpageids}" +
+                   $"&piprop={piprop}" +
+                   $"&pithumbsize={pithumbsize}" +
+                   $"&titles={title}" +
                    $"&exchars={exchars}" +
                    $"&exintro={exintro}" +
                    $"&exlimit={exlimit}";
 
+      // TODO if query.pageids[0] == -1, there are no matches
+
       string res = await SendHttpGetRequest(url);
       Extract extract = JsonConvert.DeserializeObject<Extract>(res);
       string extract_html = extract.query.pages[0].extract;
+      Page extract_page = extract.query.pages[0];
+
       string filled_html =
         $"<html lang=\"en\">" +
         $"<head>" +
           $"<meta charset=\"utf-8\"/>" +
-          $"<meta" +
-              $"name=\"viewport\"" +
+          $"<meta " +
+              $"name=\"viewport\" " +
               $"content=\"width=device-width, initial-scale=1, shrink-to-fit=no\"" +
           $"/>" +
-          $"<link" +
-              $"href=\"https://fonts.googleapis.com/css?family=Lato&display=swap\"" +
+          $"<link " +
+              $"href=\"https://fonts.googleapis.com/css?family=Lato&display=swap\" " +
               $"rel=\"stylesheet\"/>" +
-          $"<link rel=\"stylesheet\" href=\"css/bootstrap.min.css\"/>" +
-          $"<title>{summary.displaytitle}</title>" +
+          $"<link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css\">" +
+      $"<title>{extract_page.title}</title>" +
         $"</head>" +
         $"<div>";
 
-      if (summary.thumbnail != null)
+      if (extract_page.thumbnail != null)
       {
 
         filled_html +=
-              $"<img src=\"{summary.thumbnail.source}\"" +
-                   $"alt=\"{summary.displaytitle}_img\"" +
-                   $"style=\"width:{summary.thumbnail.width}px;" +
-                           $"height: {summary.thumbnail.height}px;" +
+              $"<img src=\"{extract_page.thumbnail.source}\"" +
+                   $"alt=\"{extract_page.title}_img\"" +
+                   $"style=\"width:{extract_page.thumbnail.width}px;" +
+                           $"height: {extract_page.thumbnail.height}px;" +
                            $"float:right; margin - left:7px; margin - bottom:5px;\" />";
       }
 
@@ -99,19 +105,14 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
 
       filled_html +=
         $"<span style=\"font-size: 20px;\">" +
-          $"<b>{summary.displaytitle}</b></span>" +
+          $"<b>{extract_page.title}</b></span>" +
+          $"<p>{extract_page.description}</p>" +
           $"{(string.IsNullOrEmpty(extract_html) ? $"No extract found for {title}" : $"{extract_html}")}" +
       $"</div>" +
       $"</html>";
         
       return filled_html;
 
-    }
-
-    public object SummaryParser(Summary summary)
-    {
-      // TODO
-      return summary;
     }
 
     // Formats title to be sent to API
