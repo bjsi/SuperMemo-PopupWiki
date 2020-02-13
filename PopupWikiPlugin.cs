@@ -61,7 +61,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
     #region Properties Impl - Public
 
     /// <inheritdoc />
-    public override string Name => "Popup Wiki";
+    public override string Name => "PopupWiki";
 
     public override bool HasSettings => true;
 
@@ -91,7 +91,6 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
     }
     public async void GetPopupWiki()
     {
-      Console.WriteLine("PopupWiki hotkey clicked");
       var ctrlGroup = Svc.SM.UI.ElementWdw.ControlGroup;
       var htmlCtrl  = ctrlGroup?.FocusedControl.AsHtml();
       var htmlDoc   = htmlCtrl?.GetDocument();
@@ -108,7 +107,16 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
       if (string.IsNullOrWhiteSpace(text))
         return;
 
-      string html = await wikiService.GetExtract(text);
+      string html = string.Empty;
+      
+      if (Config.MinimalistHtml)
+      {
+        html = await wikiService.GetExtract(text);
+      }
+      else
+      {
+        html = await wikiService.GetMobileHtml(text);
+      }
 
       Application.Current.Dispatcher.Invoke(
         () =>

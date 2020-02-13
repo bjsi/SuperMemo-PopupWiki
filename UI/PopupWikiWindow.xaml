@@ -6,7 +6,17 @@
         xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
         mc:Ignorable="d"
         KeyDown="Window_KeyDown"
-        Title="PopupWiki" Height="420" Width="370">
+        SizeToContent="Height"
+        BorderThickness="0" 
+        GlowBrush="Black"
+        Title="PopupWiki"
+        Width="500"
+        Topmost="True"
+        TitlebarHeight="20"
+        Height="500"
+        Name="WikiWindow"
+        WindowStyle="None"
+        MaxHeight="600">
   <mah:MetroWindow.Resources>
     <ResourceDictionary>
       <ResourceDictionary.MergedDictionaries>

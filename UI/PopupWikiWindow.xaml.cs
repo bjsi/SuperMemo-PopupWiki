@@ -1,5 +1,6 @@
 ﻿using System.Windows.Input;
 using System;
+using System.Windows.Navigation;
 
 
 namespace SuperMemoAssistant.Plugins.PopupWiki.UI
@@ -15,7 +16,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
       InitializeComponent();
       Browser.NavigateToString(html);
     }
-
+    
     private void Window_KeyDown(object       sender,
                                 KeyEventArgs e)
     {

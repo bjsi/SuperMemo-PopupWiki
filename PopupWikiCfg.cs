@@ -25,6 +25,9 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
   {
     [Field(Name = "Wikipedia Language")]
     public string WikiLanguage { get; set; } = "en";
+
+    [Field(Name = "Load minimalist HTML for speed?")]
+    public bool MinimalistHtml { get; set; } = true;
     
     [JsonIgnore]
     public bool IsChanged { get; set; }

@@ -138,6 +138,14 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
 
     }
 
+    public async Task<string> GetMobileHtml(string title)
+    {
+      string res = await SendHttpGetRequest(RestApiBaseUrl + $"page/mobile-html/{ParseTitle(title)}");
+      res = res.Replace("<meta charset=\"utf-8\">", "<meta charset=\"utf-8\"><meta http-equiv=\"X-UA-Compatible\" content=\"IE=11\">");
+      Console.WriteLine(res);
+      return res;
+    }
+
     // Formats title to be sent to API
     private string ParseTitle(string title)
     {
