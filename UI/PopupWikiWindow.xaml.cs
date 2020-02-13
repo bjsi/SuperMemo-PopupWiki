@@ -13,7 +13,6 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
     public PopupWikiWindow(PopupWikiService wikiService, string html)
     {
       InitializeComponent();
-      Console.WriteLine(html);
       Browser.NavigateToString(html);
     }
 

@@ -84,3 +84,9 @@ C:\Users\james\Documents\SuperMemoAssistant\src\Plugins\SuperMemoAssistant.Plugi
 C:\Users\james\Documents\SuperMemoAssistant\src\Plugins\SuperMemoAssistant.Plugins.PopupWiki\obj\x86\Debug-InProd\SuperMemoAssistant.Plugins.PopupWiki.csproj.CopyComplete
 C:\Users\james\Documents\SuperMemoAssistant\src\Plugins\SuperMemoAssistant.Plugins.PopupWiki\obj\x86\Debug-InProd\SuperMemoAssistant.Plugins.PopupWiki.dll
 C:\Users\james\Documents\SuperMemoAssistant\src\Plugins\SuperMemoAssistant.Plugins.PopupWiki\obj\x86\Debug-InProd\SuperMemoAssistant.Plugins.PopupWiki.pdb
+C:\Users\james\Documents\SuperMemoAssistant\src\Plugins\SuperMemoAssistant.Plugins.PopupWiki\bin\x86\Debug-InProd\PopupWikiTemplate.Mustache
+C:\Users\james\Documents\SuperMemoAssistant\src\Plugins\SuperMemoAssistant.Plugins.PopupWiki\bin\x86\Debug-InProd\Stubble.Core.dll
+C:\Users\james\Documents\SuperMemoAssistant\src\Plugins\SuperMemoAssistant.Plugins.PopupWiki\bin\x86\Debug-InProd\System.Threading.Tasks.Extensions.dll
+C:\Users\james\Documents\SuperMemoAssistant\src\Plugins\SuperMemoAssistant.Plugins.PopupWiki\bin\x86\Debug-InProd\Stubble.Core.pdb
+C:\Users\james\Documents\SuperMemoAssistant\src\Plugins\SuperMemoAssistant.Plugins.PopupWiki\bin\x86\Debug-InProd\Stubble.Core.xml
+C:\Users\james\Documents\SuperMemoAssistant\src\Plugins\SuperMemoAssistant.Plugins.PopupWiki\bin\x86\Debug-InProd\System.Threading.Tasks.Extensions.xml

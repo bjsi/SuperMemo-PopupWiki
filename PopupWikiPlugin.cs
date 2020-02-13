@@ -42,6 +42,7 @@ using System.Windows.Input;
 using SuperMemoAssistant.Plugins.PopupWiki.UI;
 using System;
 
+
 namespace SuperMemoAssistant.Plugins.PopupWiki
 {
   // ReSharper disable once UnusedMember.Global

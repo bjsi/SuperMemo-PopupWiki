@@ -10,6 +10,8 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SuperMemoAssistant.Sys;
 using SuperMemoAssistant.Sys.Remoting;
+using Stubble.Core.Builders;
+using System.IO;
 
 namespace SuperMemoAssistant.Plugins.PopupWiki
 {
@@ -45,7 +47,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
       string formatversion = "latest";
       int indexpageids = 1;
       string piprop = "thumbnail|name|original";
-      int pithumbsize = 400;
+      int pithumbsize = 300;
       int exchars = 1200;
       bool exintro = true;
       int exlimit = 1;
@@ -71,8 +73,11 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
 
       string res = await SendHttpGetRequest(url);
       Extract extract = JsonConvert.DeserializeObject<Extract>(res);
+      return StubbleHtml(extract);
       string extract_html = extract.query.pages[0].extract;
       Page extract_page = extract.query.pages[0];
+
+      var stubble = new StubbleBuilder().Build();
 
       string filled_html =
         $"<html lang=\"en\">" +
@@ -112,6 +117,24 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
       $"</html>";
         
       return filled_html;
+
+    }
+    public string StubbleHtml(Extract extract)
+    {
+      var stubble = new StubbleBuilder().Build();
+      // If e
+      // TODO if query.pageids[0] == -1, there are no matches
+        // TODO At build time the html template is placed in the app root.
+        // TODOOOOOOOOO That didn't work remember to place in app root!!
+      using (StreamReader streamReader = new StreamReader(@"PopupWikiTemplate.Mustache", Encoding.UTF8))
+      {
+        var obj = extract.query.pages[0];
+        var output = stubble.Render(streamReader.ReadToEnd(), obj);
+        Console.WriteLine(output);
+        return output;
+      }
+      
+      // Else return "sorry no matches found."
 
     }
 
