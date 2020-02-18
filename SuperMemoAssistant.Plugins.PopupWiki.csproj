@@ -65,6 +65,9 @@
     <Reference Include="Forge.Forms, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\..\packages\Forge.Forms.1.1.1\lib\net461\Forge.Forms.dll</HintPath>
     </Reference>
+    <Reference Include="HtmlAgilityPack, Version=1.11.18.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\HtmlAgilityPack.1.11.18\lib\Net45\HtmlAgilityPack.dll</HintPath>
+    </Reference>
     <Reference Include="Humanizer, Version=2.4.0.0, Culture=neutral, PublicKeyToken=979442b78dfc278e, processorArchitecture=MSIL">
       <HintPath>..\..\..\packages\Humanizer.Core.2.4.2\lib\netstandard2.0\Humanizer.dll</HintPath>
     </Reference>
@@ -131,6 +134,7 @@
       <HintPath>..\..\..\packages\System.Threading.Tasks.Extensions.4.5.1\lib\netstandard2.0\System.Threading.Tasks.Extensions.dll</HintPath>
     </Reference>
     <Reference Include="System.Web" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Windows.Interactivity, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\..\packages\ControlzEx.3.0.2.4\lib\net462\System.Windows.Interactivity.dll</HintPath>
     </Reference>
@@ -148,6 +152,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="PopupWikiCfg.cs" />
+    <Compile Include="PopupWikiHotKeys.cs" />
     <Compile Include="PopupWikiPlugin.cs" />
     <Compile Include="PopupWikiService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -172,8 +177,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="MediumWikiTemplate.Mustache" />
+    <None Include="MobileWikiTemplate.Mustache" />
     <None Include="packages.config" />
-    <Content Include="PopupWikiTemplate.Mustache">
+    <Content Include="MinimalistWikiTemplate.Mustache">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

@@ -12,6 +12,8 @@ using SuperMemoAssistant.Sys;
 using SuperMemoAssistant.Sys.Remoting;
 using Stubble.Core.Builders;
 using System.IO;
+using System.Text.RegularExpressions;
+using HtmlAgilityPack;
 
 namespace SuperMemoAssistant.Plugins.PopupWiki
 {
@@ -35,115 +37,128 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
       _httpClient?.Dispose();
     }
 
-    public async Task<string> GetExtract(string title)
+    public async Task<string> GetMinimalistHtml(string title)
     {
-      string action = "query";
-      string format = "json";
-      string errorformat = "bc";
-      string prop = "description|extracts|pageimages";
-      string list = "";
-      string meta = "";
-      int utf8 = 1;
-      string formatversion = "latest";
-      int indexpageids = 1;
-      string piprop = "thumbnail|name|original";
-      int pithumbsize = 300;
-      int exchars = 1200;
-      bool exintro = true;
-      int exlimit = 1;
-
       string url = $"{MediaWikiApiBaseUrl}" +
-                   $"?action={action}" +
-                   $"&format={format}" +
-                   $"&errorformat={errorformat}" +
-                   $"&prop={prop}" +
-                   $"&list={list}" +
-                   $"&meta={meta}" +
-                   $"&utf8={utf8}" +
-                   $"&formatversion={formatversion}" +
-                   $"&indexpageids={indexpageids}" +
-                   $"&piprop={piprop}" +
-                   $"&pithumbsize={pithumbsize}" +
+                   $"?action=query" +
+                   $"&format=json" +
+                   $"&errorformat=bc" +
+                   $"&prop=description|extracts|pageimages" +
+                   $"&utf8=1" +
+                   $"&formatversion=latest" +
+                   $"&indexpageids=1" +
+                   $"&piprop=thumbnail|name|original" +
+                   $"&pithumbsize=300" +
                    $"&titles={title}" +
-                   $"&exchars={exchars}" +
-                   $"&exintro={exintro}" +
-                   $"&exlimit={exlimit}";
-
+                   $"&exchars=1200" +
+                   $"&exintro={true}" +
+                   $"&exlimit=1";
       // TODO if query.pageids[0] == -1, there are no matches
-
       string res = await SendHttpGetRequest(url);
-      Extract extract = JsonConvert.DeserializeObject<Extract>(res);
-      return StubbleHtml(extract);
-      string extract_html = extract.query.pages[0].extract;
-      Page extract_page = extract.query.pages[0];
-
-      var stubble = new StubbleBuilder().Build();
-
-      string filled_html =
-        $"<html lang=\"en\">" +
-        $"<head>" +
-          $"<meta charset=\"utf-8\"/>" +
-          $"<meta " +
-              $"name=\"viewport\" " +
-              $"content=\"width=device-width, initial-scale=1, shrink-to-fit=no\"" +
-          $"/>" +
-          $"<link " +
-              $"href=\"https://fonts.googleapis.com/css?family=Lato&display=swap\" " +
-              $"rel=\"stylesheet\"/>" +
-          $"<link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css\">" +
-      $"<title>{extract_page.title}</title>" +
-        $"</head>" +
-        $"<div>";
-
-      if (extract_page.thumbnail != null)
-      {
-
-        filled_html +=
-              $"<img src=\"{extract_page.thumbnail.source}\"" +
-                   $"alt=\"{extract_page.title}_img\"" +
-                   $"style=\"width:{extract_page.thumbnail.width}px;" +
-                           $"height: {extract_page.thumbnail.height}px;" +
-                           $"float:right; margin - left:7px; margin - bottom:5px;\" />";
-      }
-
-      // TODO add content urls to go to the full article
-
-      filled_html +=
-        $"<span style=\"font-size: 20px;\">" +
-          $"<b>{extract_page.title}</b></span>" +
-          $"<p>{extract_page.description}</p>" +
-          $"{(string.IsNullOrEmpty(extract_html) ? $"No extract found for {title}" : $"{extract_html}")}" +
-      $"</div>" +
-      $"</html>";
-        
-      return filled_html;
-
-    }
-    public string StubbleHtml(Extract extract)
-    {
+      MinimalistWiki data = JsonConvert.DeserializeObject<MinimalistWiki>(res);
+      
       var stubble = new StubbleBuilder().Build();
       // If e
       // TODO if query.pageids[0] == -1, there are no matches
         // TODO At build time the html template is placed in the app root.
         // TODOOOOOOOOO That didn't work remember to place in app root!!
-      using (StreamReader streamReader = new StreamReader(@"PopupWikiTemplate.Mustache", Encoding.UTF8))
+      using (StreamReader streamReader = new StreamReader(@"MinimalistWikiTemplate.Mustache", Encoding.UTF8))
       {
-        var obj = extract.query.pages[0];
+        var obj = data.query.pages[0];
         var output = stubble.Render(streamReader.ReadToEnd(), obj);
         Console.WriteLine(output);
         return output;
       }
-      
-      // Else return "sorry no matches found."
-
     }
 
-    public async Task<string> GetMobileHtml(string title)
+    public async Task<string> GetMediumHtml(string title)
     {
+      // string res = await SendHttpGetRequest(RestApiBaseUrl + $"page/mobile-sections-lead/{ParseTitle(title)}");
       string res = await SendHttpGetRequest(RestApiBaseUrl + $"page/mobile-html/{ParseTitle(title)}");
-      res = res.Replace("<meta charset=\"utf-8\">", "<meta charset=\"utf-8\"><meta http-equiv=\"X-UA-Compatible\" content=\"IE=11\">");
-      Console.WriteLine(res);
-      return res;
+      //<base href="https://en.wikipedia.org/api/rest_v1/page/mobile-html" />
+      // TODO Styling not working
+
+      HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
+      doc.LoadHtml(res);
+      doc.DocumentNode.Descendants()
+                      .Where(n => n.Name == "script")
+                      .ToList()
+                      .ForEach(n => n.Remove());
+
+      foreach (HtmlNode node in doc.DocumentNode.SelectNodes("//figure"))
+      {
+        bool hasImg = false;
+        foreach (HtmlNode child in node.ChildNodes)
+        {
+          if (node.Name == "img")
+          {
+            hasImg = true;
+            break;
+          }
+        }
+
+        if (!hasImg)
+        {
+          var imgPlaceholder = node.SelectSingleNode("//span[contains(@class, 'pcs-lazy-load-placeholder')]");
+          if (imgPlaceholder != null)
+          {
+            // Replace the placeholder spans with the img data
+            string height = imgPlaceholder.GetAttributeValue("data-height", "");
+            string width = imgPlaceholder.GetAttributeValue("data-width", "");
+            string dataSrc = imgPlaceholder.GetAttributeValue("data-src", "");
+            HtmlNode imgNode = HtmlNode.CreateNode($"<img src=\"{dataSrc}\" height=\"{height}\" width=\"{width}\" />");
+            imgPlaceholder.ParentNode.ChildNodes.Add(imgNode);
+            imgPlaceholder.Remove();
+          }
+        }
+      }
+
+      string style1 = "<link rel=\"stylesheet\" href=\"https://meta.wikimedia.org/api/rest_v1/data/css/mobile/pcs\" />";
+      string style2 = "<link rel=\"stylesheet\" href=\"https://meta.wikimedia.org/api/rest_v1/data/css/mobile/base\" />";
+      string style3 = "<link rel=\"stylesheet\" href=\"https://en.wikipedia.org/api/rest_v1/data/css/mobile/site\" />";
+      string style4 = "<link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css\">";
+      string meta = "<meta http-equiv=\"X-UA-Compatible\" content=\"IE=8\">";
+
+      HtmlNode _base = doc.DocumentNode.SelectSingleNode("//base");
+      _base.SetAttributeValue("href", "https://en.wikipedia.org/wiki/");
+
+      HtmlNode _style1 = HtmlNode.CreateNode(style1);
+      HtmlNode _style2 = HtmlNode.CreateNode(style2);
+      HtmlNode _style3 = HtmlNode.CreateNode(style3);
+      HtmlNode _style4 = HtmlNode.CreateNode(style4);
+
+      HtmlNode _meta = HtmlNode.CreateNode(meta);
+
+      HtmlNode head = doc.DocumentNode.SelectSingleNode("//head");
+      //head.ChildNodes.Add(_style1);
+      //head.ChildNodes.Add(_style2);
+      //head.ChildNodes.Add(_style3);
+      //head.ChildNodes.Add(_style4);
+      head.ChildNodes.Add(_meta);
+
+      //MediumWiki data = JsonConvert.DeserializeObject<MediumWiki>(res);
+      //var stubble = new StubbleBuilder().Build();
+
+      // TODO: Clean this up
+
+      // TODO: Must remember to add a proper base href property.
+      //Dictionary<string, object> obj = new Dictionary<string, object>();
+      //obj.Add("title", data.displaytitle);
+      //obj.Add("description", data.description);
+      //obj.Add("text", data.sections[0].text);
+
+      // If e
+      // TODO if query.pageids[0] == -1, there are no matches
+      // TODO At build time the html template is placed in the app root.
+      // TODOOOOOOOOO That didn't work remember to place in app root!!
+      //using (StreamReader streamReader = new StreamReader(@"MobileWikiTemplate.Mustache", Encoding.UTF8))
+      //{
+      //var htmlstring = stubble.Render(streamReader.ReadToEnd(), output);
+      //Console.WriteLine(output);
+      //return htmlstring;
+      //}
+      Console.WriteLine(doc.DocumentNode.OuterHtml);
+      return doc.DocumentNode.OuterHtml;
     }
 
     // Formats title to be sent to API

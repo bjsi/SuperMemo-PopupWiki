@@ -36,8 +36,22 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
   }
 
   [Serializable]
-  public class Extract
+  public class MinimalistWiki
   {
     public Query query { get; set; }
+  }
+
+  [Serializable]
+  public class Section
+  {
+    public string text;
+  }
+
+  [Serializable]
+  public class MediumWiki
+  {
+    public string displaytitle;
+    public string description;
+    public Section[] sections;
   }
 }

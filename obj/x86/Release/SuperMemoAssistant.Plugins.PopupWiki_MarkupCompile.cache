@@ -4,16 +4,16 @@
 library
 C#
 .cs
-C:\Users\james\Documents\SuperMemoAssistant\src\Plugins\SuperMemoAssistant.Plugins.PopupWiki\obj\x86\Debug-InProd\
+C:\Users\james\Documents\SuperMemoAssistant\src\Plugins\SuperMemoAssistant.Plugins.PopupWiki\obj\x86\Release\
 SuperMemoAssistant.Plugins.PopupWiki
 none
 false
-DEBUG;TRACE
+TRACE
 
 1-1525494383
 1-861899550
-91899448965
-153-319848793
+8-100954629
+152-1779165373
 UI\PopupWikiWindow.xaml;
 
 False

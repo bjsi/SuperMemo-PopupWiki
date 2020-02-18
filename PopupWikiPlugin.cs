@@ -42,7 +42,6 @@ using System.Windows.Input;
 using SuperMemoAssistant.Plugins.PopupWiki.UI;
 using System;
 
-
 namespace SuperMemoAssistant.Plugins.PopupWiki
 {
   // ReSharper disable once UnusedMember.Global
@@ -78,16 +77,20 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
 
       wikiService = new PopupWikiService();
 
-      Console.WriteLine("Registering Hotkey for popupwiki");
+      // Global
       Svc.HotKeyManager
          .RegisterGlobal(
-           "popupwiki",
-           "Get PopupWiki for selected term",
+           "OpenPopupWiki",
+           "(Global) Get PopupWiki for selected term",
            HotKeyScope.SM,
            new HotKey(Key.H, KeyModifiers.CtrlAlt),
            GetPopupWiki,
            true
           );
+      
+      // Local
+      //PopupWikiHotKeys.RegisterHotKeys();
+
     }
     public async void GetPopupWiki()
     {
@@ -111,11 +114,11 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
       
       if (Config.MinimalistHtml)
       {
-        html = await wikiService.GetExtract(text);
+        html = await wikiService.GetMinimalistHtml(text);
       }
       else
       {
-        html = await wikiService.GetMobileHtml(text);
+        html = await wikiService.GetMediumHtml(text);
       }
 
       Application.Current.Dispatcher.Invoke(
@@ -126,6 +129,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
         }
       );
     }
+
 
     #region Methods Impl
 
