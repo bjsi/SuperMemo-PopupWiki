@@ -53,29 +53,33 @@
       <Button Name="BtnInsertTags"
                     Grid.Column="1"
                     VerticalAlignment="Center"
-                    Click="BtnExtractSel_Click">
+                    Click="BtnSMExtract_Click">
         <AccessText>
-          E_XTRACT SELECTION
+          E_XTRACT
+        </AccessText>
+      </Button>
+      
+          <Button Name="BtnSMPriorityExtract"
+              Grid.Column="2"
+              VerticalAlignment="Center"
+              Click="BtnSMPriorityExtract_Click"
+              Margin="6 0 6 0">
+        <AccessText>
+          _PRIORITY EXTRACT          
         </AccessText>
       </Button>
 
         <Button Name="BtnCancel"
-                    Grid.Column="2"
-                    Margin="6 0 6 0"
-                    VerticalAlignment="Center"
-                    Click="BtnExtractPage_Click" >
-        <AccessText>
-          EXTRACT _PAGE
-        </AccessText>
-          
-        </Button>
-
-
-        <Button Name="BtnOk"
                     Grid.Column="3"
                     VerticalAlignment="Center"
-                    Content="Close"
-                    Click="BtnClose_Click" />
+                    Click="BtnImport_Click" >
+        <AccessText>
+          _IMPORT
+        </AccessText>
+        </Button>
+          
+        
+
 
       </Grid>
 

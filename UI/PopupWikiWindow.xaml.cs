@@ -1,7 +1,9 @@
 ﻿using Forge.Forms;
+using System.Linq;
 using System.IO;
 using System.Drawing;
 using System.Windows.Input;
+using System.Windows.Forms;
 using System;
 using HtmlAgilityPack;
 using mshtml;
@@ -55,7 +57,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
     private void CreatePageExtract()
     {
     }
-    protected ContentBase CreateImageContent(Image  image,
+    protected ContentBase CreateImageContent(Image image,
                                              string title)
     {
       if (image == null)
@@ -161,11 +163,12 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
       IHTMLSelectionObject selection = htmlDoc.selection;
       IHTMLTxtRange range = (IHTMLTxtRange)selection.createRange();
 
-
       string selectedHtml = range.htmlText;
-      text = range.text;
+
       HtmlDocument doc = new HtmlDocument();
       doc.LoadHtml(selectedHtml);
+
+      // Parse Images
       HtmlNodeCollection selectedImages = doc.DocumentNode.SelectNodes("//img");
       if (selectedImages != null)
       {
@@ -174,6 +177,26 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
           images.Add(htmlImage.OuterHtml);
         }
       }
+
+      // Parse Text Html
+      doc.DocumentNode.Descendants()
+                      .Where(n => n.Name == "img")
+                      .ToList()
+                      .ForEach(n => n.Remove());
+
+      // Convert relative links to full links
+      HtmlNodeCollection linkNodes = doc.DocumentNode.SelectNodes("//a");
+      if (linkNodes != null)
+      {
+        foreach (HtmlNode linkNode in linkNodes)
+        {
+          // TODO 
+          linkNode.Attributes["href"].Value = "http://en.wikipedia.org/wiki" + linkNode.Attributes["href"].Value.Substring(1);
+          Console.WriteLine($"Link node: {linkNode.Attributes["href"].Value}");
+        }
+      }
+
+      text = doc.DocumentNode.OuterHtml;
 
       // Set current page references
       HtmlNode titleNode = browserDoc.DocumentNode.SelectSingleNode("//head/title");
@@ -187,7 +210,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
       {
         currentUrl = urlNode.Attributes["href"].Value;
       }
-  
+
       foreach (string image in images)
       {
         Console.WriteLine(image);
@@ -197,21 +220,22 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
       return (text, images);
     }
 
-    private void BtnExtractSel_Click(object sender, System.Windows.RoutedEventArgs e)
+    private void BtnSMExtract_Click(object sender, System.Windows.RoutedEventArgs e)
     {
       Console.WriteLine("SM Extract");
       CreateSMExtract();
     }
 
-    private void BtnExtractPage_Click(object sender, System.Windows.RoutedEventArgs e)
+    private void BtnImport_Click(object sender, System.Windows.RoutedEventArgs e)
     {
       Console.WriteLine("Page Extract");
       CreatePageExtract();
     }
 
-    private void BtnClose_Click(object sender, System.Windows.RoutedEventArgs e)
+    private void BtnSMPriorityExtract_Click(object sender, System.Windows.RoutedEventArgs e)
     {
-      Close();
+      Console.WriteLine("Priority Extract");
+      CreateSMExtractWithPriority();
     }
   }
 }
