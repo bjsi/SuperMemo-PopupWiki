@@ -53,5 +53,8 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
     public string displaytitle;
     public string description;
     public Section[] sections;
+
+    // On error
+    public string title;
   }
 }

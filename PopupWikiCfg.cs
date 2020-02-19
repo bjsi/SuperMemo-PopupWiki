@@ -27,7 +27,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
     public string WikiLanguage { get; set; } = "en";
 
     [Field(Name = "Load minimalist HTML for speed?")]
-    public bool MinimalistHtml { get; set; } = true;
+    public bool MinimalistHtml { get; set; } = false;
     
     [Field(Name = "Default SM Extract Priority (%)")]
     [Value(Must.BeGreaterThanOrEqualTo,
@@ -61,7 +61,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
 
     public override string ToString()
     {
-      return "Watcher";
+      return "PopupWiki";
     }
 
     public event PropertyChangedEventHandler PropertyChanged;

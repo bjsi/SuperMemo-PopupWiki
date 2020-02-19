@@ -95,9 +95,9 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
     public async void GetPopupWiki()
     {
       var ctrlGroup = Svc.SM.UI.ElementWdw.ControlGroup;
-      var htmlCtrl  = ctrlGroup?.FocusedControl.AsHtml();
-      var htmlDoc   = htmlCtrl?.GetDocument();
-      var sel       = htmlDoc?.selection;
+      var htmlCtrl = ctrlGroup?.FocusedControl.AsHtml();
+      var htmlDoc = htmlCtrl?.GetDocument();
+      var sel = htmlDoc?.selection;
 
       if (!(sel?.createRange() is IHTMLTxtRange textSel))
         return;
@@ -111,7 +111,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
         return;
 
       string html = string.Empty;
-      
+
       if (Config.MinimalistHtml)
       {
         html = await wikiService.GetMinimalistHtml(text);
@@ -129,7 +129,6 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
         }
       );
     }
-
 
     #region Methods Impl
 

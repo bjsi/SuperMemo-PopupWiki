@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -24,6 +25,9 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
     public string RestApiBaseUrl => $"http://{Config.WikiLanguage}.wikipedia.org/api/rest_v1/";
     public string MediaWikiApiBaseUrl => $"http://{Config.WikiLanguage}.wikipedia.org/w/api.php";
     public string WikiBaseUrl => $"http://{Config.WikiLanguage}.wikipedia.org/";
+
+    // TODO: Test other languages
+    public string WikiSearchUrl => $"https://{Config.WikiLanguage}.wikipedia.org/w/api.php?action=opensearch";
 
     public PopupWikiService()
     {
@@ -73,97 +77,112 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
 
     public async Task<string> GetMediumHtml(string title)
     {
-      // string res = await SendHttpGetRequest(RestApiBaseUrl + $"page/mobile-sections-lead/{ParseTitle(title)}");
       string res = await SendHttpGetRequest(RestApiBaseUrl + $"page/mobile-html/{ParseTitle(title)}");
-      //<base href="https://en.wikipedia.org/api/rest_v1/page/mobile-html" />
-      // TODO Styling not working
-
-      HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
-      doc.LoadHtml(res);
-      doc.DocumentNode.Descendants()
-                      .Where(n => n.Name == "script")
-                      .ToList()
-                      .ForEach(n => n.Remove());
-
-      foreach (HtmlNode node in doc.DocumentNode.SelectNodes("//figure"))
+      if (res != null)
       {
-        bool hasImg = false;
-        foreach (HtmlNode child in node.ChildNodes)
-        {
-          if (node.Name == "img")
-          {
-            hasImg = true;
-            break;
-          }
-        }
+        HtmlDocument doc = new HtmlDocument();
+        doc.LoadHtml(res);
 
-        if (!hasImg)
+        // Remove scripts (script errors)
+        doc.DocumentNode.Descendants()
+                        .Where(n => n.Name == "script")
+                        .ToList()
+                        .ForEach(n => n.Remove());
+
+        // Convert image placeholders into actual images
+        // Image placeholders exist as children of "figure" / "figure-inline" tags
+        // But some figure tags already have images, so skip those.
+        HtmlNodeCollection figureNodes = doc.DocumentNode.SelectNodes("//figure | //figure-inline");
+        if (figureNodes != null)
         {
-          var imgPlaceholder = node.SelectSingleNode("//span[contains(@class, 'pcs-lazy-load-placeholder')]");
-          if (imgPlaceholder != null)
+          foreach (HtmlNode figureNode in figureNodes)
           {
-            // Replace the placeholder spans with the img data
-            string height = imgPlaceholder.GetAttributeValue("data-height", "");
-            string width = imgPlaceholder.GetAttributeValue("data-width", "");
-            string dataSrc = imgPlaceholder.GetAttributeValue("data-src", "");
-            HtmlNode imgNode = HtmlNode.CreateNode($"<img src=\"{dataSrc}\" height=\"{height}\" width=\"{width}\" />");
-            imgPlaceholder.ParentNode.ChildNodes.Add(imgNode);
-            imgPlaceholder.Remove();
+            bool hasImg = false;
+            foreach (HtmlNode child in figureNode.ChildNodes)
+            {
+              if (figureNode.Name == "img")
+              {
+                hasImg = true;
+                break;
+              }
+            }
+            if (!hasImg)
+            {
+              var imgPlaceholder = figureNode.SelectSingleNode("//span[contains(@class, 'pcs-lazy-load-placeholder')]");
+              if (imgPlaceholder != null)
+              {
+                // Replace the placeholder with an img element
+                string height = imgPlaceholder.GetAttributeValue("data-height", "");
+                string width = imgPlaceholder.GetAttributeValue("data-width", "");
+                string dataSrc = imgPlaceholder.GetAttributeValue("data-src", "");
+                HtmlNode imgNode = HtmlNode.CreateNode($"<img src=\"{dataSrc}\" height=\"{height}\" width=\"{width}\" />");
+                imgPlaceholder.ParentNode.ChildNodes.Add(imgNode);
+                imgPlaceholder.Remove();
+              }
+            }
           }
         }
+        // Set the base url to desktop wiki
+        HtmlNode _base = doc.DocumentNode.SelectSingleNode("//base");
+        _base.SetAttributeValue("href", $"{WikiBaseUrl}/wiki");
+
+        // WebBrowser uses an older version of IE
+        string meta = "<meta http-equiv=\"X-UA-Compatible\" content=\"IE=8\">";
+        HtmlNode _meta = HtmlNode.CreateNode(meta);
+        HtmlNode head = doc.DocumentNode.SelectSingleNode("//head");
+        head.ChildNodes.Add(_meta);
+        return doc.DocumentNode.OuterHtml;
       }
 
-      string style1 = "<link rel=\"stylesheet\" href=\"https://meta.wikimedia.org/api/rest_v1/data/css/mobile/pcs\" />";
-      string style2 = "<link rel=\"stylesheet\" href=\"https://meta.wikimedia.org/api/rest_v1/data/css/mobile/base\" />";
-      string style3 = "<link rel=\"stylesheet\" href=\"https://en.wikipedia.org/api/rest_v1/data/css/mobile/site\" />";
-      string style4 = "<link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css\">";
-      string meta = "<meta http-equiv=\"X-UA-Compatible\" content=\"IE=8\">";
-
-      HtmlNode _base = doc.DocumentNode.SelectSingleNode("//base");
-      _base.SetAttributeValue("href", "https://en.wikipedia.org/wiki/");
-
-      HtmlNode _style1 = HtmlNode.CreateNode(style1);
-      HtmlNode _style2 = HtmlNode.CreateNode(style2);
-      HtmlNode _style3 = HtmlNode.CreateNode(style3);
-      HtmlNode _style4 = HtmlNode.CreateNode(style4);
-
-      HtmlNode _meta = HtmlNode.CreateNode(meta);
-
-      HtmlNode head = doc.DocumentNode.SelectSingleNode("//head");
-      //head.ChildNodes.Add(_style1);
-      //head.ChildNodes.Add(_style2);
-      //head.ChildNodes.Add(_style3);
-      //head.ChildNodes.Add(_style4);
-      head.ChildNodes.Add(_meta);
-
-      //MediumWiki data = JsonConvert.DeserializeObject<MediumWiki>(res);
-      //var stubble = new StubbleBuilder().Build();
-
       // TODO: Clean this up
+      string searchres = await WikiSearch(title);
 
-      // TODO: Must remember to add a proper base href property.
-      //Dictionary<string, object> obj = new Dictionary<string, object>();
-      //obj.Add("title", data.displaytitle);
-      //obj.Add("description", data.description);
-      //obj.Add("text", data.sections[0].text);
+      if (searchres != null)
+      {
+        // TODO: Fix this
+        dynamic search = JsonConvert.DeserializeObject(searchres);
+        string searchTerm = search[0];
+        JArray searchTitles = search[1];
+        JArray searchUrls = search[3];
 
-      // If e
-      // TODO if query.pageids[0] == -1, there are no matches
-      // TODO At build time the html template is placed in the app root.
-      // TODOOOOOOOOO That didn't work remember to place in app root!!
-      //using (StreamReader streamReader = new StreamReader(@"MobileWikiTemplate.Mustache", Encoding.UTF8))
-      //{
-      //var htmlstring = stubble.Render(streamReader.ReadToEnd(), output);
-      //Console.WriteLine(output);
-      //return htmlstring;
-      //}
-      Console.WriteLine(doc.DocumentNode.OuterHtml);
-      return doc.DocumentNode.OuterHtml;
+        string HtmlSearchResults = string.Empty;
+        
+        // Returns a page of results
+        if (searchTitles.Count > 0 && searchUrls.Count > 0)
+        {
+          HtmlSearchResults += $"<h1>Search Results for \"{searchTerm}\"</h1>";
+          HtmlSearchResults += "<ul>";
+          var LinkArray = searchTitles.Zip(searchUrls, (tit, link) => $"<a href=\"{link}\">{tit}</a>");
+          foreach (var item in LinkArray)
+          {
+            HtmlSearchResults += $"<li>{item}</li>";
+          }
+          HtmlSearchResults += "</ul>";
+          return HtmlSearchResults;
+        }
+      }
+      
+      // If no page / search results
+      return $"<h1>No results found for \"{title}\".</h1>";
     }
 
-    // Formats title to be sent to API
+    private async Task<string> WikiSearch(string term)
+    {
+      string url = $"{WikiSearchUrl}" +
+                   $"&search={term}" +
+                   // TODO allow customisation in the config
+                   $"&limit=30" +
+                   // Only Wiki articles, no talk pages etc.
+                   $"&namespace=0" +
+                   $"&format=json";
+
+      string res = await SendHttpGetRequest(url);
+      return res;
+    }
+
     private string ParseTitle(string title)
     {
+      // Formats title to be sent to Wiki API
       return title.Trim().Replace(" ", "_");
     }
 
@@ -181,8 +200,6 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
         }
         else
         {
-          responseMsg.EnsureSuccessStatusCode();
-          // Will never return because EnsureSuccessStatusCode throws exception.
           return null;
         }
       }
