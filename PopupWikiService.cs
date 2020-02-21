@@ -89,6 +89,22 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
                         .ToList()
                         .ForEach(n => n.Remove());
 
+        // Open collapsed divs by changing style to visible
+        // This will open the "quick facts" sections
+        HtmlNodeCollection collapseNodes = doc.DocumentNode.SelectNodes("//*[contains(@class, 'pcs-collapse')]");
+        if (collapseNodes != null)
+        {
+          foreach (HtmlNode collapseNode in collapseNodes)
+          {
+            string style = collapseNode.GetAttributeValue("style", null);
+            if (style != null && style.Contains("display: none;"))
+            {
+              style = style.Replace("display: none;", "display: block;");
+              collapseNode.SetAttributeValue("style", style);
+            }
+          }
+        }
+
         // Convert image placeholders into actual images
         // Image placeholders exist as children of "figure" / "figure-inline" tags
         // But some figure tags already have images, so skip those.
@@ -122,6 +138,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
             }
           }
         }
+
         // Set the base url to desktop wiki
         HtmlNode _base = doc.DocumentNode.SelectSingleNode("//base");
         _base.SetAttributeValue("href", $"{WikiBaseUrl}/wiki");
@@ -166,13 +183,17 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
       return $"<h1>No results found for \"{title}\".</h1>";
     }
 
+    public async Task<string> GetWikiPage(string url)
+    {
+      string html = await SendHttpGetRequest(url);
+      return html;
+    }
+
     private async Task<string> WikiSearch(string term)
     {
       string url = $"{WikiSearchUrl}" +
                    $"&search={term}" +
-                   // TODO allow customisation in the config
                    $"&limit=30" +
-                   // Only Wiki articles, no talk pages etc.
                    $"&namespace=0" +
                    $"&format=json";
 

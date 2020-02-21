@@ -149,6 +149,7 @@
       <HintPath>..\..\..\packages\Visualize.Fody.1.2.0\lib\net452\Visualize.dll</HintPath>
     </Reference>
     <Reference Include="WindowsBase" />
+    <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="PopupWikiCfg.cs" />

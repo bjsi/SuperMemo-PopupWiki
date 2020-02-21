@@ -23,11 +23,20 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
     Validates = true)]
   public class PopupWikiCfg: INotifyPropertyChangedEx
   {
+
+    [Serializable]
+    public enum ExtractMode
+    {
+      Child = 0,
+      Hook = 1,
+    }
+
+
     [Field(Name = "Wikipedia Language")]
     public string WikiLanguage { get; set; } = "en";
 
-    [Field(Name = "Load minimalist HTML for speed?")]
-    public bool MinimalistHtml { get; set; } = false;
+    //[Field(Name = "Load minimalist HTML for speed?")]
+    //public bool MinimalistHtml { get; set; } = false;
     
     [Field(Name = "Default SM Extract Priority (%)")]
     [Value(Must.BeGreaterThanOrEqualTo,
@@ -54,6 +63,11 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
 
     [Field(Name = "Add HTML component to extracts containing only images?")]
     public bool ImageExtractAddHtml { get; set; } = false;
+
+    [Field(Name = "Extract as child of current element or into concept hook?")]
+    [SelectFrom(typeof(ExtractMode),
+                SelectionType = SelectionType.RadioButtonsInline)]
+    public ExtractMode ExtractType { get; set; } = ExtractMode.Child;
 
 
     [JsonIgnore]

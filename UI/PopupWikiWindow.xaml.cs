@@ -17,6 +17,7 @@ using SuperMemoAssistant.Interop.SuperMemo.Elements.Models;
 using SuperMemoAssistant.Sys.Drawing;
 using System.Windows;
 using SuperMemoAssistant.Extensions;
+using System.Windows.Forms.Integration;
 
 namespace SuperMemoAssistant.Plugins.PopupWiki.UI
 {
@@ -43,15 +44,74 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
 
       if (!string.IsNullOrEmpty(html))
       {
-        Browser.NavigateToString(html);
+        wf_Browser.DocumentText = html;
         GetPageReferences(html);
         currentPageHtml = html;
       }
     }
 
-    private void CreatePageExtract()
+    private async void ImportArticle(double priority = -1)
     {
-      // TODOOOOOO
+      // TODO: Not working perfectly
+      // Images don't show up properly.
+
+      if (currentUrl.Contains(WikiBaseUrl))
+      {
+        Console.WriteLine($"Getting {currentUrl}");
+        string html = await wikiService.GetWikiPage(currentUrl);
+
+        if (!string.IsNullOrEmpty(html))
+        {
+          var contents = new List<ContentBase>();
+          var parentEl = Svc.SM.UI.ElementWdw.CurrentElement;
+
+          contents.Add(new TextContent(true, html));
+
+          if (contents.Count > 0)
+          {
+            if (priority < 0 || priority > 100)
+            {
+              priority = Config.PageExtractPriority;
+            }
+
+            Svc.SM.Registry.Element.Add(
+              out _,
+              ElemCreationFlags.ForceCreate,
+              new ElementBuilder(ElementType.Topic,
+                                 contents.ToArray())
+                .WithParent(Config.ExtractType == PopupWikiCfg.ExtractMode.Child ? parentEl : null)
+                .WithConcept(Config.ExtractType == PopupWikiCfg.ExtractMode.Hook ? parentEl.Concept : null)
+                .WithLayout("Article") // TODO
+                .WithTitle(currentTitle)
+                .WithPriority(priority)
+                .WithReference(
+                  r => r.WithTitle(currentTitle)
+                        .WithSource("Wikipedia")
+                        .WithLink(currentUrl))
+                .DoNotDisplay()
+            );
+
+            GetWindow(this)?.Activate();
+          }
+        }
+      }
+    }
+  
+    private async void ImportArticleWithPriority()
+    {
+      var result = await Forge.Forms.Show.Window()
+                         .For(new Prompt<double> { Title = "Article Import Priority?", Value = -1 });
+      if (!result.Model.Confirmed)
+      {
+        return;
+      }
+
+      if (result.Model.Value < 0 || result.Model.Value > 100)
+      {
+        return;
+      }
+
+      ImportArticle(result.Model.Value);
     }
 
     private void GetPageReferences(string html)
@@ -62,7 +122,8 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
       if (titleNode != null)
       {
         currentTitle = titleNode.InnerText;
-        currentUrl = $"http://{WikiBaseUrl}/{currentTitle.Replace(" ", "_")}";
+        string urlTitle = currentTitle.Replace(" ", "_");
+        currentUrl = $"{WikiBaseUrl}/{urlTitle}";
       }
     }
 
@@ -85,7 +146,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
 
     private IHTMLTxtRange GetSelectedRange()
     {
-      var htmlDoc = (Browser.Document as IHTMLDocument2);
+      var htmlDoc = (wf_Browser.Document.DomDocument as IHTMLDocument2);
       IHTMLSelectionObject selection = htmlDoc.selection;
       IHTMLTxtRange range = (IHTMLTxtRange)selection.createRange();
       return range;
@@ -153,7 +214,6 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
       {
         contents.Add(new TextContent(true, selTextHtml));
         hasText = true;
-        ExtractTitle = range.text;
       }
 
       // Get selected images
@@ -218,14 +278,13 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
           ElemCreationFlags.ForceCreate,
           new ElementBuilder(ElementType.Topic,
                              contents.ToArray())
-            // TODO: Test this.
-            .WithParent(parentEl)
-            .WithConcept(parentEl.Concept)
-            .WithLayout("Article")
-            .WithPriority(priority)
+            .WithParent(Config.ExtractType == PopupWikiCfg.ExtractMode.Child ? parentEl : null)
+            .WithConcept(Config.ExtractType == PopupWikiCfg.ExtractMode.Hook ? parentEl.Concept : null)
+            .WithLayout("Article") // TODO
             .WithTitle(ExtractTitle)
+            .WithPriority(priority)
             .WithReference(
-              r => r.WithTitle(ExtractTitle)
+              r => r.WithTitle(currentTitle)
                     .WithSource("Wikipedia")
                     .WithLink(currentUrl))
             .DoNotDisplay()
@@ -252,10 +311,15 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
 
     private void BtnImport_Click(object sender, RoutedEventArgs e)
     {
-      CreatePageExtract();
+      // TODO:
+      // ImportArticle();
+
+      // Open link in IE
+      System.Diagnostics.Process.Start(currentUrl);
+
     }
 
-    private async void BtnSMPriorityExtract_Click(object sender, RoutedEventArgs e)
+    private async void CreateSMExtractWithPriority()
     {
       var result = await Forge.Forms.Show.Window()
                          .For(new Prompt<double> { Title = "Extract Priority?", Value = -1 });
@@ -272,10 +336,15 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
       CreateSMExtract(result.Model.Value);
     }
 
+    private void BtnSMPriorityExtract_Click(object sender, RoutedEventArgs e)
+    {
+      CreateSMExtractWithPriority();
+    }
+
     private async void BtnOpenLink_Click(object sender, RoutedEventArgs e)
     {
       // Get selected html
-      var htmlDoc = (Browser.Document as IHTMLDocument2);
+      var htmlDoc = (wf_Browser.Document.DomDocument as IHTMLDocument2);
       IHTMLSelectionObject selection = htmlDoc.selection;
       IHTMLTxtRange range = (IHTMLTxtRange)selection.createRange();
       string selectedHtml = range.htmlText;
@@ -301,6 +370,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
           }
           else if (href.StartsWith(WikiBaseUrl))
           {
+            // TODO use URI .Segments.Last()
             SearchTermArray.Add(href.Replace($"{WikiBaseUrl}/", ""));
           }
         }
@@ -320,6 +390,57 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
             );
           }
         }
+      }
+    }
+
+    private void wf_Browser_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
+    {
+      wf_Browser.Document.Body.KeyPress += new HtmlElementEventHandler(wf_Docbody);
+
+      // Add Click events to links
+      var Links = wf_Browser.Document.Links;
+      if (Links != null)
+      {
+        foreach (HtmlElement link in Links)
+        {
+          link.Click += new HtmlElementEventHandler(LinkClick);
+        }
+      }
+    }
+
+    private async void LinkClick(object sender, System.EventArgs e)
+    {
+      // TODO: What if the link is not a wiki link
+
+      HtmlElement element = ((HtmlElement)sender);
+      string href = element.GetAttribute("href");
+      Console.WriteLine(href);
+      var uri = new Uri(href);
+      var articleTitle = uri.Segments.Last();
+
+      // Open a new popupwiki window
+      string html = await wikiService.GetMediumHtml(articleTitle);
+      System.Windows.Application.Current.Dispatcher.Invoke(
+      () =>
+      {
+        var wdw = new PopupWikiWindow(wikiService, html);
+        wdw.ShowAndActivate();
+      }
+    );
+    }
+
+    private void wf_Docbody(object sender, HtmlElementEventArgs e)
+    {
+      Console.WriteLine($"Key Code: {e.KeyPressedCode}");
+      // x
+      if (e.KeyPressedCode == 120)
+      {
+        CreateSMExtract();
+      }
+      // ctrl + x
+      else if (e.KeyPressedCode == 24)
+      {
+        CreateSMExtractWithPriority();
       }
     }
   }

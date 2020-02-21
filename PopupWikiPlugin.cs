@@ -32,6 +32,9 @@
 using SuperMemoAssistant.Services.Sentry;
 using System.Windows;
 using mshtml;
+using System.Collections.Generic;
+using HtmlAgilityPack;
+using System.Linq;
 using SuperMemoAssistant.Extensions;
 using SuperMemoAssistant.Services.UI.Configuration;
 using SuperMemoAssistant.Services;
@@ -87,11 +90,30 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
            GetPopupWiki,
            true
           );
-      
+
       // Local
       //PopupWikiHotKeys.RegisterHotKeys();
 
     }
+
+    public IHTMLTxtRange GetSelectedText()
+    {
+      var ctrlGroup = Svc.SM.UI.ElementWdw.ControlGroup;
+      var htmlCtrl = ctrlGroup?.FocusedControl.AsHtml();
+      var htmlDoc = htmlCtrl?.GetDocument();
+      var sel = htmlDoc?.selection;
+
+      if (!(sel?.createRange() is IHTMLTxtRange textSel))
+        return null;
+
+      return textSel;
+    }
+
+    public async void Get2()
+    {
+      IHTMLTxtRange range = GetSelectedText();
+    }
+
     public async void GetPopupWiki()
     {
       var ctrlGroup = Svc.SM.UI.ElementWdw.ControlGroup;
@@ -110,16 +132,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
       if (string.IsNullOrWhiteSpace(text))
         return;
 
-      string html = string.Empty;
-
-      if (Config.MinimalistHtml)
-      {
-        html = await wikiService.GetMinimalistHtml(text);
-      }
-      else
-      {
-        html = await wikiService.GetMediumHtml(text);
-      }
+      string html = await wikiService.GetMediumHtml(text);
 
       Application.Current.Dispatcher.Invoke(
         () =>

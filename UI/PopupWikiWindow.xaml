@@ -4,16 +4,15 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+        xmlns:wf="clr-namespace:System.Windows.Forms;assembly=System.Windows.Forms"
         mc:Ignorable="d"
-        SizeToContent="Height"
         BorderThickness="0" 
         GlowBrush="Black"
         Title="PopupWiki"
         Width="500"
         Topmost="True"
         TitlebarHeight="20"
-        Height="500"
-        MaxHeight="800"
+        Height="800"
                  >
   <mah:MetroWindow.Resources>
     <ResourceDictionary>
@@ -36,10 +35,16 @@
 
         <Grid Grid.Row="0">
 
-            <WebBrowser Name="Browser"
-                        Grid.Row="0"
-                        HorizontalAlignment="Stretch"
-                        />
+      <WindowsFormsHost Name="wfh"
+                        >
+        
+        <wf:WebBrowser x:Name="wf_Browser"
+                       AllowNavigation="False"
+                       WebBrowserShortcutsEnabled="False"
+                       DocumentCompleted="wf_Browser_DocumentCompleted"
+                       IsWebBrowserContextMenuEnabled="False"
+                       />
+      </WindowsFormsHost>
         </Grid>
       
         <Grid Grid.Row="1" Margin="6">
@@ -51,43 +56,28 @@
                 <ColumnDefinition Width="auto" />
       </Grid.ColumnDefinitions>
 
-      <Button Name="BtnInsertTags"
+      <Button Name="BtnSMExtract"
                     Grid.Column="1"
                     VerticalAlignment="Center"
+                    Content="EXTRACT"
                     Click="BtnSMExtract_Click">
-        <AccessText>
-          E_XTRACT
-        </AccessText>
       </Button>
       
           <Button Name="BtnSMPriorityExtract"
               Grid.Column="2"
               VerticalAlignment="Center"
               Click="BtnSMPriorityExtract_Click"
+              Content="PRIORITY EXTRACT"
               Margin="6 0 6 0">
-        <AccessText>
-          _PRIORITY EXTRACT          
-        </AccessText>
       </Button>
           
         <Button Name="BtnImport"
                     Grid.Column="3"
                     VerticalAlignment="Center"
+                    Content="IMPORT"
                     Click="BtnImport_Click" >
-        <AccessText>
-          _IMPORT
-        </AccessText>
         </Button>
 
-      <Button Name="BtnOpenLink"
-              Grid.Column="4"
-              VerticalAlignment="Center"
-              Click="BtnOpenLink_Click"
-              Margin="6 0 6 0">
-        <AccessText>
-          _OPEN LINK
-        </AccessText>
-      </Button>
       </Grid>
 
     </Grid>
