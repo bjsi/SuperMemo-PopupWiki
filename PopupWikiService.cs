@@ -139,6 +139,21 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
           }
         }
 
+        // Remove the <a> parent element of images
+        HtmlNodeCollection imageNodes = doc.DocumentNode.SelectNodes("//img");
+        if (imageNodes != null)
+        {
+          foreach (HtmlNode imageNode in imageNodes)
+          {
+            if (imageNode.ParentNode.Name == "a") 
+            {
+              var grandParentNode = imageNode.ParentNode.ParentNode;
+              grandParentNode.RemoveChild(imageNode.ParentNode, true);
+            }
+          }
+        }
+
+
         // Set the base url to desktop wiki
         HtmlNode _base = doc.DocumentNode.SelectSingleNode("//base");
         _base.SetAttributeValue("href", $"{WikiBaseUrl}/wiki");

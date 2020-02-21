@@ -348,7 +348,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
       IHTMLSelectionObject selection = htmlDoc.selection;
       IHTMLTxtRange range = (IHTMLTxtRange)selection.createRange();
       string selectedHtml = range.htmlText;
-      
+        
       // Parse links from selected html
       HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
       doc.LoadHtml(selectedHtml);
@@ -397,7 +397,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
     {
       wf_Browser.Document.Body.KeyPress += new HtmlElementEventHandler(wf_Docbody);
 
-      // Add Click events to links
+      // Add Click events to links to open in popup wiki
       var Links = wf_Browser.Document.Links;
       if (Links != null)
       {
@@ -408,7 +408,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
       }
     }
 
-    private async void LinkClick(object sender, System.EventArgs e)
+    private async void LinkClick(object sender, EventArgs e)
     {
       // TODO: What if the link is not a wiki link
 

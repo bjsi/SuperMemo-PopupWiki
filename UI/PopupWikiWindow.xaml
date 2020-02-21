@@ -40,7 +40,6 @@
         
         <wf:WebBrowser x:Name="wf_Browser"
                        AllowNavigation="False"
-                       WebBrowserShortcutsEnabled="False"
                        DocumentCompleted="wf_Browser_DocumentCompleted"
                        IsWebBrowserContextMenuEnabled="False"
                        />
