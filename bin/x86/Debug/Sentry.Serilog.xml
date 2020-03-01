@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Sentry.Serilog</name>
+    </assembly>
+    <members>
+        <member name="T:Sentry.Serilog.SentrySerilogOptions">
+            <summary>
+            Sentry Options for Serilog logging
+            </summary>
+            <inheritdoc />
+        </member>
+        <member name="P:Sentry.Serilog.SentrySerilogOptions.InitializeSdk">
+            <summary>
+            Whether to initialize this SDK through this integration
+            </summary>
+        </member>
+        <member name="P:Sentry.Serilog.SentrySerilogOptions.MinimumEventLevel">
+            <summary>
+            Minimum log level to send an event.
+            </summary>
+            <remarks>
+            Events with this level or higher will be sent to Sentry.
+            </remarks>
+            <value>
+            The minimum event level.
+            </value>
+        </member>
+        <member name="P:Sentry.Serilog.SentrySerilogOptions.MinimumBreadcrumbLevel">
+            <summary>
+            Minimum log level to record a breadcrumb.
+            </summary>
+            <remarks>Events with this level or higher will be stored as <see cref="T:Sentry.Protocol.Breadcrumb"/></remarks>
+            <value>
+            The minimum breadcrumb level.
+            </value>
+        </member>
+        <member name="P:Sentry.Serilog.SentrySerilogOptions.FormatProvider">
+            <summary>
+            Optional <see cref="T:System.IFormatProvider"/>
+            </summary>
+        </member>
+        <member name="T:Sentry.Serilog.SentrySink">
+            <summary>
+            Sentry Sink for Serilog
+            </summary>
+            <inheritdoc cref="T:System.IDisposable" />
+            <inheritdoc cref="T:Serilog.Core.ILogEventSink" />
+        </member>
+        <member name="T:Serilog.SentrySinkExtensions">
+            <summary>
+            Sentry Serilog Sink extensions.
+            </summary>
+        </member>
+        <member name="M:Serilog.SentrySinkExtensions.Sentry(Serilog.Configuration.LoggerSinkConfiguration,System.String,Serilog.Events.LogEventLevel,Serilog.Events.LogEventLevel,System.IFormatProvider)">
+            <summary>
+            Add Sentry Serilog Sink.
+            </summary>
+            <param name="loggerConfiguration">The logger configuration.</param>
+            <param name="dsn">The Sentry DSN.</param>
+            <param name="minimumBreadcrumbLevel">Minimum log level to record a breadcrumb.</param>
+            <param name="minimumEventLevel">Minimum log level to send an event.</param>
+            <param name="formatProvider">The Serilog format provider.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Serilog.SentrySinkExtensions.Sentry(Serilog.Configuration.LoggerSinkConfiguration,System.Action{Sentry.Serilog.SentrySerilogOptions})">
+            <summary>
+            Add Sentry sink to Serilog.
+            </summary>
+            <param name="loggerConfiguration">The logger configuration.</param>
+            <param name="configureOptions">The configure options callback.</param>
+            <returns></returns>
+        </member>
+    </members>
+</doc>

@@ -42,6 +42,8 @@
                        AllowNavigation="False"
                        DocumentCompleted="wf_Browser_DocumentCompleted"
                        IsWebBrowserContextMenuEnabled="False"
+                       WebBrowserShortcutsEnabled="False"
+                       AllowWebBrowserDrop="False"
                        />
       </WindowsFormsHost>
         </Grid>

@@ -22,12 +22,8 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
   {
     private PopupWikiCfg Config => Svc<PopupWiki>.Plugin.Config;
     private readonly HttpClient _httpClient;
-    public string RestApiBaseUrl => $"http://{Config.WikiLanguage}.wikipedia.org/api/rest_v1/";
-    public string MediaWikiApiBaseUrl => $"http://{Config.WikiLanguage}.wikipedia.org/w/api.php";
-    public string WikiBaseUrl => $"http://{Config.WikiLanguage}.wikipedia.org/";
-
-    // TODO: Test other languages
-    public string WikiSearchUrl => $"https://{Config.WikiLanguage}.wikipedia.org/w/api.php?action=opensearch";
+    public string RestApiBaseUrl => $"http://{Config.WikiLanguages.Split(',')[0]}.wikipedia.org/api/rest_v1/";
+    public string MediaWikiApiBaseUrl => $"http://{Config.WikiLanguages.Split(',')[0]}.wikipedia.org/w/api.php";
 
     public PopupWikiService()
     {
@@ -75,126 +71,163 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
       }
     }
 
-    public async Task<string> GetMediumHtml(string title)
+    private HtmlDocument FilterMobileHtml(HtmlDocument doc)
     {
-      string res = await SendHttpGetRequest(RestApiBaseUrl + $"page/mobile-html/{ParseTitle(title)}");
+      // Remove scripts to prevent script errors
+      doc.DocumentNode.Descendants()
+                      .Where(n => n.Name == "script")
+                      .ToList()
+                      .ForEach(n => n.Remove());
+
+      // Open collapsed divs by changing style to visible
+      // This will open the "quick facts" sections
+      HtmlNodeCollection collapseNodes = doc.DocumentNode.SelectNodes("//*[contains(@class, 'pcs-collapse')]");
+      if (collapseNodes != null)
+      {
+        foreach (HtmlNode collapseNode in collapseNodes)
+        {
+          string style = collapseNode.GetAttributeValue("style", null);
+          if (style != null && style.Contains("display: none;"))
+          {
+            style = style.Replace("display: none;", "display: block;");
+            collapseNode.SetAttributeValue("style", style);
+          }
+        }
+      }
+
+      // Convert image placeholders into actual images
+      // Image placeholders exist as children of "figure" / "figure-inline" tags
+      // But some figure tags already have images, so skip those.
+      HtmlNodeCollection figureNodes = doc.DocumentNode.SelectNodes("//figure | //figure-inline");
+      if (figureNodes != null)
+      {
+        foreach (HtmlNode figureNode in figureNodes)
+        {
+          bool hasImg = false;
+          foreach (HtmlNode child in figureNode.ChildNodes)
+          {
+            if (figureNode.Name == "img")
+            {
+              hasImg = true;
+              break;
+            }
+          }
+          if (!hasImg)
+          {
+            var imgPlaceholder = figureNode.SelectSingleNode("//span[contains(@class, 'pcs-lazy-load-placeholder')]");
+            if (imgPlaceholder != null)
+            {
+              // Replace the placeholder with an img element
+              string height = imgPlaceholder.GetAttributeValue("data-height", "");
+              string width = imgPlaceholder.GetAttributeValue("data-width", "");
+              string dataSrc = imgPlaceholder.GetAttributeValue("data-src", "");
+              HtmlNode imgNode = HtmlNode.CreateNode($"<img src=\"{dataSrc}\" height=\"{height}\" width=\"{width}\" />");
+              imgPlaceholder.ParentNode.ChildNodes.Add(imgNode);
+              imgPlaceholder.Remove();
+            }
+          }
+        }
+      }
+
+      // Remove the <a> parent element of images
+      HtmlNodeCollection imageNodes = doc.DocumentNode.SelectNodes("//img");
+      if (imageNodes != null)
+      {
+        foreach (HtmlNode imageNode in imageNodes)
+        {
+          if (imageNode.ParentNode.Name == "a") 
+          {
+            var grandParentNode = imageNode.ParentNode.ParentNode;
+            grandParentNode.RemoveChild(imageNode.ParentNode, true);
+          }
+        }
+      }
+
+      // WebBrowser uses an older version of IE
+      string meta = "<meta http-equiv=\"X-UA-Compatible\" content=\"IE=8\">";
+      HtmlNode _meta = HtmlNode.CreateNode(meta);
+      HtmlNode head = doc.DocumentNode.SelectSingleNode("//head");
+      head.ChildNodes.Add(_meta);
+
+      return doc;
+
+    }
+
+    public async Task<string> GetSearchResults(string term)
+    {
+      string[] languages = Config.WikiLanguages.Split(',');
+      string HtmlSearchResults = string.Empty;
+
+      foreach (string language in languages)
+      {
+        string searchres = await WikiSearch(term, language);
+
+        if (searchres != null)
+        {
+          // TODO: Can this be made safer?
+          dynamic search = JsonConvert.DeserializeObject(searchres);
+          string searchTerm = search[0];
+          JArray searchTitles = search[1];
+          JArray searchUrls = search[3];
+
+          // Returns a page of results
+          if (searchTitles.Count > 0 && searchUrls.Count > 0)
+          {
+            HtmlSearchResults += $"<h3>{language} search results</h3>";
+            HtmlSearchResults += "<ul>";
+            var LinkArray = searchTitles.Zip(searchUrls, (title, link) => $"<a href=\"{link}\">{title}</a>");
+            foreach (var item in LinkArray)
+            {
+              HtmlSearchResults += $"<li>{item}</li>";
+            }
+            HtmlSearchResults += "</ul>";
+          }
+        }
+      }
+
+      if (!string.IsNullOrEmpty(HtmlSearchResults))
+      {
+        return $"<h1>Search Results for \"{term}\"</h1>{HtmlSearchResults}";
+      }
+
+      return null;
+    }
+
+    public async Task<string> GetMediumHtml(string title, string language)
+    {
+      
+      string articleUrlTitle = ParseTitle(title);
+      string url = $"http://{language}.wikipedia.org/api/rest_v1/page/mobile-html/{articleUrlTitle}";
+      string res = await SendHttpGetRequest(url);
+
+      // Found an article with same title as search.
       if (res != null)
       {
         HtmlDocument doc = new HtmlDocument();
         doc.LoadHtml(res);
 
-        // Remove scripts (script errors)
-        doc.DocumentNode.Descendants()
-                        .Where(n => n.Name == "script")
-                        .ToList()
-                        .ForEach(n => n.Remove());
-
-        // Open collapsed divs by changing style to visible
-        // This will open the "quick facts" sections
-        HtmlNodeCollection collapseNodes = doc.DocumentNode.SelectNodes("//*[contains(@class, 'pcs-collapse')]");
-        if (collapseNodes != null)
-        {
-          foreach (HtmlNode collapseNode in collapseNodes)
-          {
-            string style = collapseNode.GetAttributeValue("style", null);
-            if (style != null && style.Contains("display: none;"))
-            {
-              style = style.Replace("display: none;", "display: block;");
-              collapseNode.SetAttributeValue("style", style);
-            }
-          }
-        }
-
-        // Convert image placeholders into actual images
-        // Image placeholders exist as children of "figure" / "figure-inline" tags
-        // But some figure tags already have images, so skip those.
-        HtmlNodeCollection figureNodes = doc.DocumentNode.SelectNodes("//figure | //figure-inline");
-        if (figureNodes != null)
-        {
-          foreach (HtmlNode figureNode in figureNodes)
-          {
-            bool hasImg = false;
-            foreach (HtmlNode child in figureNode.ChildNodes)
-            {
-              if (figureNode.Name == "img")
-              {
-                hasImg = true;
-                break;
-              }
-            }
-            if (!hasImg)
-            {
-              var imgPlaceholder = figureNode.SelectSingleNode("//span[contains(@class, 'pcs-lazy-load-placeholder')]");
-              if (imgPlaceholder != null)
-              {
-                // Replace the placeholder with an img element
-                string height = imgPlaceholder.GetAttributeValue("data-height", "");
-                string width = imgPlaceholder.GetAttributeValue("data-width", "");
-                string dataSrc = imgPlaceholder.GetAttributeValue("data-src", "");
-                HtmlNode imgNode = HtmlNode.CreateNode($"<img src=\"{dataSrc}\" height=\"{height}\" width=\"{width}\" />");
-                imgPlaceholder.ParentNode.ChildNodes.Add(imgNode);
-                imgPlaceholder.Remove();
-              }
-            }
-          }
-        }
-
-        // Remove the <a> parent element of images
-        HtmlNodeCollection imageNodes = doc.DocumentNode.SelectNodes("//img");
-        if (imageNodes != null)
-        {
-          foreach (HtmlNode imageNode in imageNodes)
-          {
-            if (imageNode.ParentNode.Name == "a") 
-            {
-              var grandParentNode = imageNode.ParentNode.ParentNode;
-              grandParentNode.RemoveChild(imageNode.ParentNode, true);
-            }
-          }
-        }
-
+        // Filter the HtmlDocument
+        doc = FilterMobileHtml(doc);
 
         // Set the base url to desktop wiki
         HtmlNode _base = doc.DocumentNode.SelectSingleNode("//base");
-        _base.SetAttributeValue("href", $"{WikiBaseUrl}/wiki");
+        _base.SetAttributeValue("href", $"https://{language}.wikipedia.org/wiki");
 
-        // WebBrowser uses an older version of IE
-        string meta = "<meta http-equiv=\"X-UA-Compatible\" content=\"IE=8\">";
-        HtmlNode _meta = HtmlNode.CreateNode(meta);
-        HtmlNode head = doc.DocumentNode.SelectSingleNode("//head");
-        head.ChildNodes.Add(_meta);
-        return doc.DocumentNode.OuterHtml;
-      }
-
-      // TODO: Clean this up
-      string searchres = await WikiSearch(title);
-
-      if (searchres != null)
-      {
-        // TODO: Fix this
-        dynamic search = JsonConvert.DeserializeObject(searchres);
-        string searchTerm = search[0];
-        JArray searchTitles = search[1];
-        JArray searchUrls = search[3];
-
-        string HtmlSearchResults = string.Empty;
-        
-        // Returns a page of results
-        if (searchTitles.Count > 0 && searchUrls.Count > 0)
+        if (doc != null)
         {
-          HtmlSearchResults += $"<h1>Search Results for \"{searchTerm}\"</h1>";
-          HtmlSearchResults += "<ul>";
-          var LinkArray = searchTitles.Zip(searchUrls, (tit, link) => $"<a href=\"{link}\">{tit}</a>");
-          foreach (var item in LinkArray)
-          {
-            HtmlSearchResults += $"<li>{item}</li>";
-          }
-          HtmlSearchResults += "</ul>";
-          return HtmlSearchResults;
+          // Return html string
+          return doc.DocumentNode.OuterHtml;
         }
       }
-      
-      // If no page / search results
+
+      // No article with same title as selected text, so redirect to search.
+      string searchRes = await GetSearchResults(title);
+      if (!string.IsNullOrEmpty(searchRes))
+      {
+        return searchRes;
+      }
+
+      // No direct article found and no search results - return a "nothing found" page
       return $"<h1>No results found for \"{title}\".</h1>";
     }
 
@@ -204,11 +237,13 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
       return html;
     }
 
-    private async Task<string> WikiSearch(string term)
+    private async Task<string> WikiSearch(string term, string language)
     {
+      string WikiSearchUrl = $"https://{language}.wikipedia.org/w/api.php?action=opensearch";
+
       string url = $"{WikiSearchUrl}" +
                    $"&search={term}" +
-                   $"&limit=30" +
+                   $"&limit={Config.NumSearchResults}" +
                    $"&namespace=0" +
                    $"&format=json";
 

@@ -80,23 +80,18 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
 
       wikiService = new PopupWikiService();
 
-      // Global
       Svc.HotKeyManager
          .RegisterGlobal(
            "OpenPopupWiki",
            "(Global) Get PopupWiki for selected term",
            HotKeyScope.SM,
-           new HotKey(Key.H, KeyModifiers.CtrlAlt),
+           new HotKey(Key.W, KeyModifiers.CtrlAlt),
            GetPopupWiki,
            true
           );
-
-      // Local
-      //PopupWikiHotKeys.RegisterHotKeys();
-
     }
 
-    public IHTMLTxtRange GetSelectedText()
+    public string GetSelectedText()
     {
       var ctrlGroup = Svc.SM.UI.ElementWdw.ControlGroup;
       var htmlCtrl = ctrlGroup?.FocusedControl.AsHtml();
@@ -105,39 +100,27 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
 
       if (!(sel?.createRange() is IHTMLTxtRange textSel))
         return null;
-
-      return textSel;
-    }
-
-    public async void Get2()
-    {
-      IHTMLTxtRange range = GetSelectedText();
-    }
-
-    public async void GetPopupWiki()
-    {
-      var ctrlGroup = Svc.SM.UI.ElementWdw.ControlGroup;
-      var htmlCtrl = ctrlGroup?.FocusedControl.AsHtml();
-      var htmlDoc = htmlCtrl?.GetDocument();
-      var sel = htmlDoc?.selection;
-
-      if (!(sel?.createRange() is IHTMLTxtRange textSel))
-        return;
-
+      
       var text = textSel.text?.Trim(' ',
                                     '\t',
                                     '\r',
                                     '\n');
+      return text;
+    }
 
-      if (string.IsNullOrWhiteSpace(text))
+    public async void GetPopupWiki()
+    {
+      string selText = GetSelectedText();
+
+      if (string.IsNullOrWhiteSpace(selText))
         return;
 
-      string html = await wikiService.GetMediumHtml(text);
+      string html = await wikiService.GetMediumHtml(selText, Config.WikiLanguages.Split(',')[0]);
 
       Application.Current.Dispatcher.Invoke(
         () =>
         {
-          var wdw = new PopupWikiWindow(wikiService, html);
+          var wdw = new PopupWikiWindow(wikiService, html, Config.WikiLanguages.Split(',')[0]);
           wdw.ShowAndActivate();
         }
       );

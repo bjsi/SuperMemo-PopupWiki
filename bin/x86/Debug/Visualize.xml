@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Visualize</name>
+    </assembly>
+    <members>
+        <member name="T:Visualize.DebuggerEnumerableTypeAttribute">
+            <summary>
+            Marks a type as an enumerable type and hence no DebuggerTypeProxy is added.
+            </summary>
+        </member>
+    </members>
+</doc>

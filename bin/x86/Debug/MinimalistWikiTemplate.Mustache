@@ -1,0 +1,28 @@
+﻿<html lang="en">
+<head>
+    <meta name="viewport"
+          charset="utf-8"
+          content="width=device-width,
+                       initial-scale=1
+                       shrink-to-fit=no" />
+    <link href="https://fonts.googleapis.com/css?family=Lato&display=swap"
+          rel="stylesheet" />
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+          rel="stylesheet" />
+    <title>{{ title }}</title>
+</head> 
+    <body>
+        <div class="container mb-2">
+            <img src={{ thumbnail.source }}
+                 alt="{{ title }}"
+                 style="width: {{ thumbnail.width }}px;
+                        height: {{ thumbnail.height }}px;
+                        float: right;
+                        margin - left: 7px;
+                        margin - bottom: 5px;" />
+            <h1>{{ title }}</h1>
+            <h3 style="color: gray;">{{ description }}</h3>
+        {{{ extract }}}
+        </div>
+    </body>
+</html>

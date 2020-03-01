@@ -32,11 +32,14 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
     }
 
 
-    [Field(Name = "Wikipedia Language")]
-    public string WikiLanguage { get; set; } = "en";
+    [Field(Name = "Wikipedia Languages (comma-separated, first is the main language eg. en,fi,fr)")]
+    public string WikiLanguages { get; set; } = "en";
 
     //[Field(Name = "Load minimalist HTML for speed?")]
     //public bool MinimalistHtml { get; set; } = false;
+
+    [Field(Name = "Search results per language?")]
+    public int NumSearchResults { get; set; } = 15;
     
     [Field(Name = "Default SM Extract Priority (%)")]
     [Value(Must.BeGreaterThanOrEqualTo,

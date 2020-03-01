@@ -93,3 +93,5 @@ C:\Users\james\Documents\SuperMemoAssistant\src\Plugins\SuperMemoAssistant.Plugi
 C:\Users\james\Documents\SuperMemoAssistant\src\Plugins\SuperMemoAssistant.Plugins.PopupWiki\bin\x86\Debug-InProd\HtmlAgilityPack.dll
 C:\Users\james\Documents\SuperMemoAssistant\src\Plugins\SuperMemoAssistant.Plugins.PopupWiki\bin\x86\Debug-InProd\HtmlAgilityPack.pdb
 C:\Users\james\Documents\SuperMemoAssistant\src\Plugins\SuperMemoAssistant.Plugins.PopupWiki\bin\x86\Debug-InProd\HtmlAgilityPack.xml
+C:\Users\james\Documents\SuperMemoAssistant\src\Plugins\SuperMemoAssistant.Plugins.PopupWiki\obj\x86\Debug-InProd\Interop.SHDocVw.dll
+C:\Users\james\Documents\SuperMemoAssistant\src\Plugins\SuperMemoAssistant.Plugins.PopupWiki\obj\x86\Debug-InProd\SuperMemoAssistant.Plugins.PopupWiki.csproj.ResolveComReference.cache
