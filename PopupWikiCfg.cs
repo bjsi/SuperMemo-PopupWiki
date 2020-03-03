@@ -40,7 +40,25 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
 
     [Field(Name = "Search results per language?")]
     public int NumSearchResults { get; set; } = 15;
-    
+
+    [Field(Name = "PopupWiki Window Width")]
+    [Value(Must.BeGreaterThan,
+           0,
+           StrictValidation = true)]
+    public int WindowWidth { get; set; } = 700;
+
+    [Field(Name = "PopupWiki Window Height")]
+    [Value(Must.BeGreaterThan,
+           0,
+           StrictValidation = true)]
+    public int WindowHeight { get; set; } = 800;
+
+    [Field(Name = "PopupWiki Window Left Startup Location")]
+    public int WindowLeft { get; set; } = 105;
+
+    [Field(Name = "PopupWiki Window Top Startup Location")]
+    public int WindowTop { get; set; } = 105;
+
     [Field(Name = "Default SM Extract Priority (%)")]
     [Value(Must.BeGreaterThanOrEqualTo,
            0,

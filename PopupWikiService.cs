@@ -75,7 +75,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
     {
       // Remove scripts to prevent script errors
       doc.DocumentNode.Descendants()
-                      .Where(n => n.Name == "script")
+                      .Where(n => n.Name == "script" || n.Name == "noscript")
                       .ToList()
                       .ForEach(n => n.Remove());
 
@@ -148,12 +148,13 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
             if (imgPlaceholder != null)
             {
               // Replace the placeholder with an img element
-              string height = imgPlaceholder.GetAttributeValue("data-height", "");
-              string width = imgPlaceholder.GetAttributeValue("data-width", "");
+              string dataHeight = imgPlaceholder.GetAttributeValue("data-height", "");
+              string dataWidth = imgPlaceholder.GetAttributeValue("data-width", "");
               string dataSrc = imgPlaceholder.GetAttributeValue("data-src", "");
-              if (!string.IsNullOrEmpty(height) && !string.IsNullOrEmpty("width") && !string.IsNullOrEmpty("dataSrc"))
+
+              if (!string.IsNullOrEmpty(dataHeight) && !string.IsNullOrEmpty(dataWidth) && !string.IsNullOrEmpty(dataSrc))
               {
-                HtmlNode imgNode = HtmlNode.CreateNode($"<img src=\"{dataSrc}\" height=\"{height}\" width=\"{width}\" />");
+                HtmlNode imgNode = HtmlNode.CreateNode($"<img src=\"{dataSrc}\" height=\"{dataHeight}\" width=\"{dataWidth}\" />");
                 imgPlaceholder.ParentNode.ChildNodes.Add(imgNode);
                 imgPlaceholder.Remove();
               }
@@ -187,7 +188,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
       }
 
       // WebBrowser uses an older version of IE
-      string meta = "<meta http-equiv=\"X-UA-Compatible\" content=\"IE=9\">";
+      string meta = "<meta http-equiv=\"X-UA-Compatible\" content=\"IE=10\">";
       HtmlNode _meta = HtmlNode.CreateNode(meta);
       HtmlNode head = doc.DocumentNode.SelectSingleNode("//head");
       head.ChildNodes.Add(_meta);
@@ -278,6 +279,13 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
           }
         }
 
+        // Remove the header Nav.
+        var headerNode = doc.DocumentNode.SelectSingleNode("//header");
+        if (headerNode != null)
+        {
+          headerNode.ParentNode.RemoveChild(headerNode);
+        }
+
         if (doc != null)
         {
           return doc.DocumentNode.OuterHtml;
@@ -366,10 +374,6 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
 
         if (responseMsg.IsSuccessStatusCode)
         {
-          Console.WriteLine("Response Headers:");
-          Console.WriteLine(responseMsg.Headers);
-          Console.WriteLine("Response Content headers");
-          Console.WriteLine(responseMsg.Content.Headers);
           return await responseMsg.Content.ReadAsStringAsync();
         }
         else

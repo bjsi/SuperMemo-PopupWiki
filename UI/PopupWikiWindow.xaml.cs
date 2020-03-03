@@ -45,6 +45,21 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
       language = _language;
       domain = _domain;
 
+      this.Width = Config.WindowWidth;
+      this.Height = Config.WindowHeight;
+
+      if (Config.WindowLeft != null && Config.WindowTop != null)
+      {
+        // Adds a random offset to top and left variables to prevent stacking windows.
+        Random rnd = new Random();
+        int topRndOffset = rnd.Next(1, 40);
+        int leftRndOffset = rnd.Next(1, 50);
+
+        this.WindowStartupLocation = WindowStartupLocation.Manual;
+        this.Left = Config.WindowLeft + leftRndOffset;
+        this.Top = Config.WindowTop + topRndOffset;
+      }
+
       if (!string.IsNullOrEmpty(html))
       {
         wf_Browser.DocumentText = html;

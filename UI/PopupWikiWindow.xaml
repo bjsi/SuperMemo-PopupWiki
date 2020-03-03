@@ -9,11 +9,10 @@
         BorderThickness="0" 
         GlowBrush="Black"
         Title="PopupWiki"
-        Width="500"
+        Width="700"
         Topmost="True"
         TitlebarHeight="20"
-        Height="800"
-                 >
+        Height="800">
   <mah:MetroWindow.Resources>
     <ResourceDictionary>
       <ResourceDictionary.MergedDictionaries>
