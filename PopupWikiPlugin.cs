@@ -88,6 +88,14 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
            new HotKey(Key.W, KeyModifiers.CtrlAlt),
            GetPopupWiki,
            true
+          )
+         .RegisterGlobal(
+          "OpenPopupWiktionary",
+          "(Global) Get PopupWiktionary for selected term",
+          HotKeyScope.SM,
+          new HotKey(Key.W, KeyModifiers.AltShift),
+          GetPopupWiktionary,
+          true
           );
     }
 
@@ -112,8 +120,26 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
       return filteredSelText;
     }
 
+    public async void GetPopupWiktionary()
+    {
+      string selText = GetSelectedText();
+      if (string.IsNullOrWhiteSpace(selText))
+        return;
+
+      string html = await wikiService.GetSearchResults(selText);
+      Application.Current.Dispatcher.Invoke(
+        () =>
+        {
+          var wdw = new PopupWikiWindow(wikiService, html, null, "wiktionary");
+          wdw.ShowAndActivate();
+        }
+      );
+    }
+
     public async void GetPopupWiki()
     {
+      // GetWikiMobHtml redirects to search if non article found.
+
       string selText = GetSelectedText();
 
       if (string.IsNullOrWhiteSpace(selText))

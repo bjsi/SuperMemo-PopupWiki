@@ -525,7 +525,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
       }
 
       // ctrl d
-      else if (e.KeyPressedCode == 4)
+      else if (e.KeyPressedCode == 23)
       {
         OpenDictSelText();
       }
