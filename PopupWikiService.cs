@@ -71,13 +71,41 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
       }
     }
 
-    private HtmlDocument FilterMobileHtml(HtmlDocument doc)
+    private HtmlDocument filterHtmlScripts(HtmlDocument doc)
     {
       // Remove scripts to prevent script errors
       doc.DocumentNode.Descendants()
                       .Where(n => n.Name == "script")
                       .ToList()
                       .ForEach(n => n.Remove());
+
+      // Filter comments (can contain extra scripts)
+      var commentNodes = doc.DocumentNode.SelectNodes("//comment()");
+      if (commentNodes != null)
+      {
+        foreach (var commentNode in commentNodes)
+        {
+          commentNode.ParentNode.RemoveChild(commentNode);
+        }
+      }
+
+      // Filter Html inline onclick events
+      var onclickNodes = doc.DocumentNode.SelectNodes("//*[@onclick]");
+      if (onclickNodes != null)
+      {
+        foreach (var onclickNode in onclickNodes)
+        {
+          onclickNode.Attributes.Remove("onclick");
+        }
+      }
+
+      return doc;
+    }
+
+    private HtmlDocument FilterMobileHtml(HtmlDocument doc)
+    {
+
+      doc = filterHtmlScripts(doc);
 
       // Open collapsed divs by changing style to visible
       // This will open the "quick facts" sections
@@ -114,16 +142,21 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
           }
           if (!hasImg)
           {
-            var imgPlaceholder = figureNode.SelectSingleNode("//span[contains(@class, 'pcs-lazy-load-placeholder')]");
+            //var imgPlaceholder = figureNode.SelectSingleNode("//span[contains(@class, 'pcs-lazy-load-placeholder')]");
+            // pagelib_lazy_load_placeholder
+            var imgPlaceholder = figureNode.SelectSingleNode("//span[contains(@class, 'lazy')]");
             if (imgPlaceholder != null)
             {
               // Replace the placeholder with an img element
               string height = imgPlaceholder.GetAttributeValue("data-height", "");
               string width = imgPlaceholder.GetAttributeValue("data-width", "");
               string dataSrc = imgPlaceholder.GetAttributeValue("data-src", "");
-              HtmlNode imgNode = HtmlNode.CreateNode($"<img src=\"{dataSrc}\" height=\"{height}\" width=\"{width}\" />");
-              imgPlaceholder.ParentNode.ChildNodes.Add(imgNode);
-              imgPlaceholder.Remove();
+              if (!string.IsNullOrEmpty(height) && !string.IsNullOrEmpty("width") && !string.IsNullOrEmpty("dataSrc"))
+              {
+                HtmlNode imgNode = HtmlNode.CreateNode($"<img src=\"{dataSrc}\" height=\"{height}\" width=\"{width}\" />");
+                imgPlaceholder.ParentNode.ChildNodes.Add(imgNode);
+                imgPlaceholder.Remove();
+              }
             }
           }
         }
@@ -135,16 +168,26 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
       {
         foreach (HtmlNode imageNode in imageNodes)
         {
-          if (imageNode.ParentNode.Name == "a") 
+          if (imageNode.ParentNode.Name == "a")
           {
             var grandParentNode = imageNode.ParentNode.ParentNode;
             grandParentNode.RemoveChild(imageNode.ParentNode, true);
           }
         }
       }
+      
+      // Change style to visible on section tags
+      HtmlNodeCollection sectionNodes = doc.DocumentNode.SelectNodes("//section[@style]");
+      if (sectionNodes != null)
+      {
+        foreach (HtmlNode sectionNode in sectionNodes)
+        {
+          sectionNode.Attributes["style"].Value = "display: block;";
+        }
+      }
 
       // WebBrowser uses an older version of IE
-      string meta = "<meta http-equiv=\"X-UA-Compatible\" content=\"IE=8\">";
+      string meta = "<meta http-equiv=\"X-UA-Compatible\" content=\"IE=9\">";
       HtmlNode _meta = HtmlNode.CreateNode(meta);
       HtmlNode head = doc.DocumentNode.SelectSingleNode("//head");
       head.ChildNodes.Add(_meta);
@@ -153,14 +196,14 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
 
     }
 
-    public async Task<string> GetSearchResults(string term)
+    public async Task<string> GetSearchResults(string term, string domain = "wikipedia")
     {
       string[] languages = Config.WikiLanguages.Split(',');
       string HtmlSearchResults = string.Empty;
 
       foreach (string language in languages)
       {
-        string searchres = await WikiSearch(term, language);
+        string searchres = await WikiSearch(term, language, domain);
 
         if (searchres != null)
         {
@@ -193,7 +236,59 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
       return null;
     }
 
-    public async Task<string> GetMediumHtml(string title, string language)
+    public async Task<string> GetDictMobHtml(string url)
+    {
+      // TODO: Add url check
+      Uri uri = new Uri(url);
+      string language = uri.DnsSafeHost.Split('.')[0];
+      string res = await SendHttpGetRequest(url);
+
+      if (!string.IsNullOrEmpty(res))
+      {
+        var doc = new HtmlDocument();
+        doc.LoadHtml(res);
+
+        doc = FilterMobileHtml(doc);
+
+        HtmlNode _base = doc.DocumentNode.SelectSingleNode("//base");
+        // Testing
+        string baseHref = $"https://{language}.m.wiktionary.org/wiki";
+        if (_base != null)
+        {
+          _base.SetAttributeValue("href", baseHref);
+        }
+        else
+        {
+          // add base node
+          var headNode = doc.DocumentNode.SelectSingleNode("//head");
+          HtmlNode baseNode = HtmlNode.CreateNode($"<base href=\"{baseHref}\"/>");
+          headNode.ChildNodes.Add(baseNode);
+        }
+
+        // Fix the stylesheet
+        var stylesheetNodes = doc.DocumentNode.SelectNodes("//link[@rel]");
+        if (stylesheetNodes != null)
+        {
+          foreach (var stylesheetNode in stylesheetNodes)
+          {
+            if (stylesheetNode.Attributes["rel"].Value == "stylesheet")
+            {
+              stylesheetNode.Attributes["href"].Value = $"https://{language}.m.wiktionary.org/w/load.php?lang={language}&modules=ext.wikimediaBadges%7Cmediawiki.hlist%7Cmediawiki.ui.button%2Cicon%7Cmobile.init.styles%7Cskins.minerva.base.styles%7Cskins.minerva.content.styles%7Cskins.minerva.content.styles.images%7Cskins.minerva.icons.images%2Cwikimedia%7Cskins.minerva.mainMenu.icons%2Cstyles&only=styles&skin=minerva";
+            }
+          }
+        }
+
+        if (doc != null)
+        {
+          return doc.DocumentNode.OuterHtml;
+        }
+      }
+      return null;
+    }
+
+    
+
+    public async Task<string> GetWikiMobHtml(string title, string language)
     {
       
       string articleUrlTitle = ParseTitle(title);
@@ -211,7 +306,10 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
 
         // Set the base url to desktop wiki
         HtmlNode _base = doc.DocumentNode.SelectSingleNode("//base");
-        _base.SetAttributeValue("href", $"https://{language}.wikipedia.org/wiki");
+        if (_base != null)
+        {
+          _base.SetAttributeValue("href", $"https://{language}.wikipedia.org/wiki");
+        }
 
         if (doc != null)
         {
@@ -237,9 +335,10 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
       return html;
     }
 
-    private async Task<string> WikiSearch(string term, string language)
+    // Supported domains are wikipedia and wiktionary
+    private async Task<string> WikiSearch(string term, string language, string domain = "wikipedia")
     {
-      string WikiSearchUrl = $"https://{language}.wikipedia.org/w/api.php?action=opensearch";
+      string WikiSearchUrl = $"https://{language}.{domain}.org/w/api.php?action=opensearch";
 
       string url = $"{WikiSearchUrl}" +
                    $"&search={term}" +
@@ -267,6 +366,10 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
 
         if (responseMsg.IsSuccessStatusCode)
         {
+          Console.WriteLine("Response Headers:");
+          Console.WriteLine(responseMsg.Headers);
+          Console.WriteLine("Response Content headers");
+          Console.WriteLine(responseMsg.Content.Headers);
           return await responseMsg.Content.ReadAsStringAsync();
         }
         else

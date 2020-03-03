@@ -27,7 +27,8 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
   public partial class PopupWikiWindow
   {
     private PopupWikiCfg Config => Svc<PopupWiki>.Plugin.Config;
-    private string language;
+    private string language = string.Empty;
+    private string domain = string.Empty;
 
     // Current page references
     private string currentUrl = string.Empty;
@@ -37,11 +38,12 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
     private PopupWikiService wikiService;
 
 
-    public PopupWikiWindow(PopupWikiService _wikiService, string html, string _language)
+    public PopupWikiWindow(PopupWikiService _wikiService, string html, string _language, string _domain)
     {
       InitializeComponent();
       wikiService = _wikiService;
       language = _language;
+      domain = _domain;
 
       if (!string.IsNullOrEmpty(html))
       {
@@ -55,12 +57,42 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
     {
       var doc = new HtmlAgilityPack.HtmlDocument();
       doc.LoadHtml(html);
-      HtmlNode titleNode = doc.DocumentNode.SelectSingleNode("//title");
-      if (titleNode != null)
+      Console.WriteLine(html);
+
+      // Find the title node of the webpage.
+
+      if (domain == "wikipedia")
       {
-        currentTitle = titleNode.InnerText;
-        string urlTitle = currentTitle.Replace(" ", "_");
-        currentUrl = $"https://{language}.wikipedia.org/wiki/{urlTitle}";
+        HtmlNode titleNode = doc.DocumentNode.SelectSingleNode("//title");
+        if (titleNode != null)
+        {
+          currentTitle = titleNode.InnerText;
+          string urlTitle = currentTitle.Replace(" ", "_");
+          currentUrl = $"https://{language}.{domain}.org/wiki/{urlTitle}";
+        }
+      }
+      else if (domain == "wiktionary")
+      {
+        var linkNodes = doc.DocumentNode.SelectNodes("//link[@rel]");
+        if(linkNodes != null)
+        {
+          foreach(var linkNode in linkNodes)
+          {
+            if (linkNode.Attributes["rel"].Value == "canonical")
+            {
+              Uri uri = new Uri(linkNode.Attributes["href"].Value);
+              string urlTitle = uri.Segments.Last();
+              currentTitle = urlTitle.Replace("_", " ");
+              currentUrl = $"https://{language}.{domain}.org/wiki/{urlTitle}";
+              break;
+            }
+          }
+        }
+      }
+      else
+      {
+        // log error!
+        Console.WriteLine("Domain not recognised.");
       }
     }
 
@@ -291,18 +323,17 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
 
     private void wf_Browser_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
     {
+      // Add keypress events
       wf_Browser.Document.Body.KeyPress += new HtmlElementEventHandler(wf_Docbody);
-      //Testing
 
+      // TODO: Split Wiki click events and wikitionary click events
       // Add Click events to links to open in popup wiki
       var Links = wf_Browser.Document.Links;
       if (Links != null)  
       {
         foreach (HtmlElement link in Links)
         {
-          Console.WriteLine(link.GetAttribute("href"));
-
-          if (IsValidWikiUrl(link.GetAttribute("href")))
+          if (IsValidWikiUrl(link.GetAttribute("href")) || IsValidDictUrl(link.GetAttribute("href")))
           {
             Console.WriteLine(link.GetAttribute("href"));
             link.Click += new HtmlElementEventHandler(LinkClick);
@@ -311,14 +342,26 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
       }
     }
 
-    private bool IsValidWikiUrl(string link)
+    private bool IsValidWikiUrl(string url)
     {
-      if (Uri.IsWellFormedUriString(link, UriKind.Absolute) 
-          && (new Uri(link).DnsSafeHost.Split('.')[1] == "wikipedia"))
+      if (Uri.IsWellFormedUriString(url, UriKind.Absolute) 
+          && new Uri(url).DnsSafeHost.Split('.')[1] == "wikipedia")
       {
         return true;
       }
-      else if (Uri.IsWellFormedUriString(link, UriKind.Relative))
+      else if (Uri.IsWellFormedUriString(url, UriKind.Relative))
+      {
+        return true;
+      }
+      return false;
+    }
+
+    private bool IsValidDictUrl(string url)
+    {
+      // Uses the mobile wikitionary url
+      if (Uri.IsWellFormedUriString(url, UriKind.Absolute)
+          && (( new Uri(url).DnsSafeHost.Split('.')[1] == "wiktionary")
+             || new Uri(url).DnsSafeHost.Split('.')[2] == "wiktionary"))
       {
         return true;
       }
@@ -329,10 +372,11 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
     {
       HtmlElement element = ((HtmlElement)sender);
       string href = element.GetAttribute("href");
+
       if (!string.IsNullOrEmpty(href) && IsValidWikiUrl(href))
       {
         Console.WriteLine(href);
-        
+
         var uri = new Uri(href);
 
         // Get language
@@ -342,19 +386,111 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
         var articleTitle = uri.Segments.Last();
 
         // Open a new popupwiki window
-        string html = await wikiService.GetMediumHtml(articleTitle, language);
+        string html = await wikiService.GetWikiMobHtml(articleTitle, language);
         System.Windows.Application.Current.Dispatcher.Invoke(
         () =>
           {
-            var wdw = new PopupWikiWindow(wikiService, html, language);
+            var wdw = new PopupWikiWindow(wikiService, html, language, "wikipedia");
+            wdw.ShowAndActivate();
+          }
+        );
+      }
+
+      else if (!string.IsNullOrEmpty(href) && IsValidDictUrl(href))
+      {
+        string language = new Uri(href).DnsSafeHost.Split('.')[0];
+        string html = await wikiService.GetDictMobHtml(href);
+        System.Windows.Application.Current.Dispatcher.Invoke(
+        () =>
+          {
+            var wdw = new PopupWikiWindow(wikiService, html, language, "wiktionary");
             wdw.ShowAndActivate();
           }
         );
       }
     }
 
+    private async void OpenDictSelText()
+    {
+      var selRange = GetSelectedRange();
+      if (string.IsNullOrEmpty(selRange.text))
+      {
+        return;
+      }
+
+      var filteredSelText = string.Concat(selRange.text
+                                          .Where(c => !Char.IsPunctuation(c)))
+                                  .Trim('\n', '\t', ' ', '\r');
+
+      // If language is null, it's a search results page
+      if (string.IsNullOrEmpty(filteredSelText) || string.IsNullOrEmpty(language))
+      {
+        return;
+      }
+
+      string html = await wikiService.GetSearchResults(filteredSelText, "wiktionary");
+      var doc = new HtmlAgilityPack.HtmlDocument();
+      doc.LoadHtml(html);
+      var linkNodes = doc.DocumentNode.SelectNodes("//a");
+      foreach (var linkNode in linkNodes)
+      {
+        string href = linkNode.Attributes["href"].Value;
+        if (!string.IsNullOrEmpty(href))
+        {
+          // Adjust to mobile wiki links
+          string[] splitHref = href.Split('.');
+          splitHref[0] += ".m";
+          linkNode.Attributes["href"].Value = string.Join(".", splitHref);
+        }
+      }
+  
+      // TESTING
+      html = doc.DocumentNode.OuterHtml;
+
+      System.Windows.Application.Current.Dispatcher.Invoke(
+      () =>
+        {
+          var wdw = new PopupWikiWindow(wikiService, html, language, "wiktionary");
+          wdw.ShowAndActivate();
+        }
+      );
+    }
+
+
+    private async void OpenWikiSelText()
+    {
+
+      var selRange = GetSelectedRange();
+      if (string.IsNullOrEmpty(selRange.text))
+      {
+        return;
+      }
+
+      var filteredSelText = string.Concat(selRange.text
+                                          .Where(c => !Char.IsPunctuation(c)))
+                                  .Trim('\n', '\t', ' ', '\r');
+
+      // If language is null, it's a search results page
+      if (string.IsNullOrEmpty(filteredSelText) || string.IsNullOrEmpty(language))
+      {
+        return;
+      }
+
+      
+      string html = await wikiService.GetWikiMobHtml(filteredSelText, language);
+      System.Windows.Application.Current.Dispatcher.Invoke(
+      () =>
+        {
+          var wdw = new PopupWikiWindow(wikiService, html, language, "wikipedia");
+          wdw.ShowAndActivate();
+        }
+      );
+    }
+
     private void wf_Docbody(object sender, HtmlElementEventArgs e)
     {
+      Console.WriteLine(e.KeyPressedCode);
+
       // TODO: Change to Alt
       // x
       if (e.KeyPressedCode == 120)
@@ -365,6 +501,18 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
       else if (e.KeyPressedCode == 24)
       {
         CreateSMExtractWithPriority();
+      }
+
+      // ctrl + w
+      else if (e.KeyPressedCode == 127)
+      {
+        OpenWikiSelText();
+      }
+
+      // ctrl d
+      else if (e.KeyPressedCode == 4)
+      {
+        OpenDictSelText();
       }
     }
   }

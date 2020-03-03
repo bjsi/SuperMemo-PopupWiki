@@ -100,12 +100,16 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
 
       if (!(sel?.createRange() is IHTMLTxtRange textSel))
         return null;
+
+      if (string.IsNullOrEmpty(textSel.text))
+      {
+        return null;
+      }
       
-      var text = textSel.text?.Trim(' ',
-                                    '\t',
-                                    '\r',
-                                    '\n');
-      return text;
+      var filteredSelText = string.Concat(textSel.text
+                                          .Where(c => !Char.IsPunctuation(c)))
+                                  .Trim('\n', '\t', ' ', '\r');
+      return filteredSelText;
     }
 
     public async void GetPopupWiki()
@@ -115,12 +119,12 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
       if (string.IsNullOrWhiteSpace(selText))
         return;
 
-      string html = await wikiService.GetMediumHtml(selText, Config.WikiLanguages.Split(',')[0]);
+      string html = await wikiService.GetWikiMobHtml(selText, Config.WikiLanguages.Split(',')[0]);
 
       Application.Current.Dispatcher.Invoke(
         () =>
         {
-          var wdw = new PopupWikiWindow(wikiService, html, Config.WikiLanguages.Split(',')[0]);
+          var wdw = new PopupWikiWindow(wikiService, html, Config.WikiLanguages.Split(',')[0], "wikipedia");
           wdw.ShowAndActivate();
         }
       );
