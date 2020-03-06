@@ -152,6 +152,7 @@
     <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="HtmlFilters.cs" />
     <Compile Include="PopupWikiCfg.cs" />
     <Compile Include="PopupWikiHotKeys.cs" />
     <Compile Include="PopupWikiPlugin.cs" />
@@ -161,6 +162,7 @@
     <Compile Include="UI\PopupWikiWindow.xaml.cs">
       <DependentUpon>PopupWikiWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="WikiUrlUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Core\SuperMemoAssistant.Interop\SuperMemoAssistant.Interop.csproj">

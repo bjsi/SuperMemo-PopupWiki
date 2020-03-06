@@ -57,4 +57,18 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
     // On error
     public string title;
   }
+
+  public enum SearchType
+  {
+    wikipedia,
+    wiktionary
+  }
+
+  public enum WindowType
+  {
+    wikipedia,
+    wikiSearch,
+    wiktionary,
+    wiktionarySearch
+  }
 }

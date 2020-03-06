@@ -32,6 +32,7 @@
 using SuperMemoAssistant.Services.Sentry;
 using System.Windows;
 using mshtml;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using HtmlAgilityPack;
 using System.Linq;
@@ -44,6 +45,7 @@ using SuperMemoAssistant.Interop.SuperMemo.Content.Controls;
 using System.Windows.Input;
 using SuperMemoAssistant.Plugins.PopupWiki.UI;
 using System;
+using Forge.Forms;
 
 namespace SuperMemoAssistant.Plugins.PopupWiki
 {
@@ -94,63 +96,109 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
           "(Global) Get PopupWiktionary for selected term",
           HotKeyScope.SM,
           new HotKey(Key.W, KeyModifiers.AltShift),
-          GetPopupWiktionary,
+          SearchWiktionary,
           true
           );
     }
-
-    public string GetSelectedText()
+  
+    /// <summary>
+    /// Gets the currently selected text in SuperMemo. Removes punctuation and strips whitespace.
+    /// Opens a window to edit the selection before searching.
+    /// </summary>
+    /// <returns></returns>
+    public async Task<string> GetSelectedText()
     {
       var ctrlGroup = Svc.SM.UI.ElementWdw.ControlGroup;
       var htmlCtrl = ctrlGroup?.FocusedControl.AsHtml();
       var htmlDoc = htmlCtrl?.GetDocument();
       var sel = htmlDoc?.selection;
 
+      string filteredSelText = string.Empty;
+
       if (!(sel?.createRange() is IHTMLTxtRange textSel))
         return null;
 
-      if (string.IsNullOrEmpty(textSel.text))
+      if (!string.IsNullOrEmpty(textSel.text))
       {
-        return null;
+         filteredSelText = string.Concat(textSel.text
+                                         .Where(c => !Char.IsPunctuation(c)))
+                                 .Trim('\n', '\t', ' ', '\r');
       }
-      
-      var filteredSelText = string.Concat(textSel.text
-                                          .Where(c => !Char.IsPunctuation(c)))
-                                  .Trim('\n', '\t', ' ', '\r');
+
       return filteredSelText;
     }
 
-    public async void GetPopupWiktionary()
+    /// <summary>
+    /// Searches Wiktionary using selected SuperMemo text as the search term.
+    /// </summary>
+    public async void SearchWiktionary()
     {
-      string selText = GetSelectedText();
+      string selText = await GetSelectedText();
       if (string.IsNullOrWhiteSpace(selText))
         return;
 
-      string html = await wikiService.GetSearchResults(selText);
-      Application.Current.Dispatcher.Invoke(
-        () =>
-        {
-          var wdw = new PopupWikiWindow(wikiService, html, null, "wiktionary");
-          wdw.ShowAndActivate();
-        }
-      );
+      string html = await wikiService.GetSearchResults(selText, SearchType.wiktionary);
+
+      if (string.IsNullOrEmpty(html))
+      {
+        html = $"<h1>No results found for \"{selText}\".</h1>";
+      }
+
+      OpenNewPopupWindow(wikiService, html, null, WindowType.wiktionarySearch);
     }
 
+    /// <summary>
+    /// Attempts to directly get wiki article for selected. Redirects to search if no direct article found.
+    /// </summary>
     public async void GetPopupWiki()
     {
-      // GetWikiMobHtml redirects to search if non article found.
-
-      string selText = GetSelectedText();
+      string selText = await GetSelectedText();
 
       if (string.IsNullOrWhiteSpace(selText))
         return;
 
-      string html = await wikiService.GetWikiMobHtml(selText, Config.WikiLanguages.Split(',')[0]);
+      string html = await wikiService.GetWikipediaMobileHtml(selText, Config.WikiLanguages.Split(',')[0]);
+      WindowType type = WindowType.wikipedia;
+      string language = Config.WikiLanguages.Split(',')[0];
+
+      if (string.IsNullOrEmpty(html))
+      {
+        html = await wikiService.GetSearchResults(selText, SearchType.wikipedia);
+        type = WindowType.wikiSearch;
+        language = null;
+      }
+
+      if (string.IsNullOrEmpty(html))
+      {
+        html = $"<h1>No results found for \"{selText}\".</h1>";
+        language = null;
+        // TODO: Is this right?
+        type = WindowType.wikiSearch;
+      }
+
+      OpenNewPopupWindow(wikiService, html, language, type);
+    }
+
+    /// <summary>
+    /// Open a new PopupWiki Window.
+    /// </summary>
+    /// <param name="wikiService"></param>
+    /// <param name="html"></param>
+    /// <param name="language"></param>
+    /// <param name="type"></param>
+    public void OpenNewPopupWindow(PopupWikiService wikiService, string html, string language, WindowType type)
+    {
+
+      if (string.IsNullOrEmpty(html))
+      {
+        Console.WriteLine("Attempted to open new PopupWiki window with null or empty html.");
+        return;
+      }
 
       Application.Current.Dispatcher.Invoke(
         () =>
         {
-          var wdw = new PopupWikiWindow(wikiService, html, Config.WikiLanguages.Split(',')[0], "wikipedia");
+          var wdw = new PopupWikiWindow(wikiService, html, language, type);
           wdw.ShowAndActivate();
         }
       );

@@ -39,10 +39,8 @@
         
         <wf:WebBrowser x:Name="wf_Browser"
                        AllowNavigation="False"
+                       WebBrowserShortcutsEnabled="True"
                        DocumentCompleted="wf_Browser_DocumentCompleted"
-                       IsWebBrowserContextMenuEnabled="False"
-                       WebBrowserShortcutsEnabled="False"
-                       AllowWebBrowserDrop="False"
                        />
       </WindowsFormsHost>
         </Grid>
@@ -74,7 +72,7 @@
         <Button Name="BtnImport"
                     Grid.Column="3"
                     VerticalAlignment="Center"
-                    Content="IMPORT"
+                    Content="OPEN IN IE"
                     Click="BtnImport_Click" >
         </Button>
 
