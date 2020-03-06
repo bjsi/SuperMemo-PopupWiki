@@ -115,8 +115,8 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
           if (!string.IsNullOrEmpty(res))
           {
             // Apply Html Filters
-            html = HtmlFilters.WiktionaryDesktopToMobileLinks(res);
-            html = HtmlFilters.ConvRelToAbsLinks(html, $"https://{language}.m.wiktionary.org", WikiUrlUtils.IsDesktopWiktionaryUrl);
+            html = HtmlFilters.ConvRelToAbsLinks(res, $"https://{language}.m.wiktionary.org", WikiUrlUtils.IsMobileWiktionaryUrl);
+            html = HtmlFilters.WiktionaryDesktopToMobileLinks(html);
             html = HtmlFilters.RemoveScripts(html);
             html = HtmlFilters.RemoveImageParentLink(html);
             html = HtmlFilters.UpdateBaseHref(html, $"https://{language}.m.wiktionary.org/wiki");
@@ -128,6 +128,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
           }
         }
       }
+      Console.WriteLine(html);
       return html;
     }
 
@@ -148,7 +149,6 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
         if (!string.IsNullOrEmpty(res))
         {
           // Apply Html Filters.
-          // TODO: Add relative wiki to absolute.
           html = HtmlFilters.RemoveScripts(res);
           html = HtmlFilters.ConvRelToAbsLinks(html, $"https://{language}.wikipedia.org", WikiUrlUtils.IsDesktopWikipediaUrl);
           html = HtmlFilters.WiktionaryDesktopToMobileLinks(html);

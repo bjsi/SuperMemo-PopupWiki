@@ -43,6 +43,35 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
       return html;
     }
 
+    public static string WiktionaryMobileToDesktopLinks(string html)
+    {
+      if (!string.IsNullOrEmpty(html))
+      {
+        // Get all links
+        var doc = new HtmlDocument();
+        doc.LoadHtml(html);
+
+        var linkNodes = doc.DocumentNode.SelectNodes("//a");
+        if (linkNodes != null)
+        {
+          foreach (var linkNode in linkNodes)
+          {
+            string href = linkNode.Attributes["href"].Value;
+            if (!string.IsNullOrEmpty(href))
+            {
+              if (WikiUrlUtils.IsMobileWiktionaryUrl(href))
+              {
+                linkNode.Attributes["href"].Value = WikiUrlUtils.ConvMobWiktionaryToDesktop(href);
+                Console.WriteLine($"Converted {href} to {linkNode.Attributes["href"].Value}");
+              }
+            }
+          }
+          html = doc.DocumentNode.OuterHtml;
+        }
+      }
+      return html;
+    }
+
     public static string UpdateMetaIE(string html)
     {
       if (!string.IsNullOrEmpty(html))
@@ -113,6 +142,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
       return html;
     }
 
+
     public static string ConvRelToAbsLinks(string html, string baseUrl, Func<string, bool> predicate)
     {
       if (!string.IsNullOrEmpty(html))
@@ -124,7 +154,8 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
         foreach(var linkNode in linkNodes)
         {
           string href = linkNode.Attributes["href"].Value;
-          if (Uri.IsWellFormedUriString(href, UriKind.Relative))
+          // Can't check if relative, fails if url contains #
+          if (!Uri.IsWellFormedUriString(href, UriKind.Absolute))
           {
             string absHref = WikiUrlUtils.ConvRelToAbsLink(baseUrl, href);
             if (predicate(absHref))

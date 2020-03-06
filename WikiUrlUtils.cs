@@ -141,6 +141,29 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
       return null;
     }
 
+    public static string ConvMobWiktionaryToDesktop(string url)
+    {
+      if (IsMobileWiktionaryUrl(url))
+      {
+        Uri uri = new Uri(url);
+        string[] splitUri = uri.DnsSafeHost.Split('.');
+        if (splitUri != null && splitUri.Length >= 2)
+        {
+          if (splitUri[1] == "m")
+          {
+            var desktop = url.Split('.').ToList();
+            desktop.RemoveAt(1);
+            url = string.Join(".", desktop);
+          }
+        }
+      }
+      if (IsDesktopWiktionaryUrl(url))
+      {
+        return url;
+      }
+      return null;
+    }
+
     /// <summary>
     /// Attempts to convert a relative url to a desktop wikipedia url.
     /// Returns null on failure.
@@ -153,7 +176,8 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
     {
       if (!string.IsNullOrEmpty(baseUrl) && !string.IsNullOrEmpty(relUrl))
       {
-        if (Uri.IsWellFormedUriString(baseUrl, UriKind.Absolute) && Uri.IsWellFormedUriString(relUrl, UriKind.Relative))
+        // UriKind.Relative will be false for rel urls containing #
+        if (Uri.IsWellFormedUriString(baseUrl, UriKind.Absolute))
         {
           if (baseUrl.EndsWith("/"))
           {
@@ -175,6 +199,10 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
               return $"{baseUrl}{relUrl.Substring(1)}";
             }
             return $"{baseUrl}/wiki{relUrl.Substring(1)}";
+          }
+          else if (relUrl.StartsWith("#"))
+          {
+            return $"{baseUrl}/wiki/{relUrl}";
           }
         }
       }

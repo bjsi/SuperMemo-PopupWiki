@@ -106,7 +106,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
     /// Opens a window to edit the selection before searching.
     /// </summary>
     /// <returns></returns>
-    public async Task<string> GetSelectedText()
+    public async Task<string> GetSelectedText(string text)
     {
       var ctrlGroup = Svc.SM.UI.ElementWdw.ControlGroup;
       var htmlCtrl = ctrlGroup?.FocusedControl.AsHtml();
@@ -120,12 +120,30 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
 
       if (!string.IsNullOrEmpty(textSel.text))
       {
-         filteredSelText = string.Concat(textSel.text
-                                         .Where(c => !Char.IsPunctuation(c)))
-                                 .Trim('\n', '\t', ' ', '\r');
+        filteredSelText = string.Concat(textSel.text
+                                          .Where(c => 
+                                                    c != '.'
+                                                 && c != '?'
+                                                 && c != '!'
+                                                 && c != ','))
+                                .Trim('\n', '\t', ' ', '\r');
       }
 
-      return filteredSelText;
+      DialogResult <Prompt<string>> result = null;
+
+      await Application.Current.Dispatcher.Invoke(
+        async () =>
+        {
+          result = await Show.Window()
+                             .For(new Prompt<string> { Title = text, Value = filteredSelText});
+        });
+
+      if (!result.Model.Confirmed)
+      {
+        return null;
+      }
+
+      return result.Model.Value;
     }
 
     /// <summary>
@@ -133,7 +151,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
     /// </summary>
     public async void SearchWiktionary()
     {
-      string selText = await GetSelectedText();
+      string selText = await GetSelectedText("Search Wiktionary:");
       if (string.IsNullOrWhiteSpace(selText))
         return;
 
@@ -152,7 +170,7 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
     /// </summary>
     public async void GetPopupWiki()
     {
-      string selText = await GetSelectedText();
+      string selText = await GetSelectedText("Find Wikipedia article:");
 
       if (string.IsNullOrWhiteSpace(selText))
         return;

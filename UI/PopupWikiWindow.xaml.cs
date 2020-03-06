@@ -268,7 +268,10 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
           }
         }
       }
-      Console.WriteLine("Attempted to call ParseImageUrls on a null / empty html string.");
+      else
+      {
+        Console.WriteLine("Attempted to call ParseImageUrls on a null / empty html string.");
+      }
       return imageUrls;
     }
 
@@ -320,39 +323,20 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
     {
       if (!string.IsNullOrWhiteSpace(html))
       {
-        var doc = new HtmlAgilityPack.HtmlDocument();
-        doc.LoadHtml(html);
-
-        // Remove img elements
-        doc.DocumentNode.Descendants()
-                        .Where(n => n.Name == "img")
-                        .ToList()
-                        .ForEach(n => n.Remove());
-
-        //// Convert relative links to full links
-        HtmlNodeCollection linkNodes = doc.DocumentNode.SelectNodes("//a[@href]");
-        if (linkNodes != null)
+        html = HtmlFilters.RemoveImages(html);
+        // TODO: Fix the underlying issue
+        if (windowType == WindowType.wikipedia)
         {
-          foreach (var linkNode in linkNodes)
-          {
-            if (!string.IsNullOrEmpty(linkNode.Attributes["href"].Value))
-            {
-              string href = linkNode.Attributes["href"].Value;
-              if (Uri.IsWellFormedUriString(href, UriKind.Relative))
-              {
-                if (href.StartsWith("./"))
-                {
-                  // TODO: Is this right?
-                  // TODO: Change to popupType.ToString()?
-                  // TESTING
-                  linkNode.Attributes["href"].Value = $"https://{language}.{windowType.ToString()}.org/wiki/{href.Substring(2)}";
-                }
-              }
-            }
-          }
+          html = HtmlFilters.ConvRelToAbsLinks(html, $"https://{language}.wikipedia.org", WikiUrlUtils.IsDesktopWikipediaUrl);
         }
-        return doc.DocumentNode.OuterHtml;
+        else if (windowType == WindowType.wiktionary)
+        {
+          html = HtmlFilters.ConvRelToAbsLinks(html, $"https://{language}.wiktionary.org", WikiUrlUtils.IsDesktopWiktionaryUrl);
+
+        }
+        html = HtmlFilters.WiktionaryMobileToDesktopLinks(html);
       }
+      Console.WriteLine(html);
       return html;
     }
 
@@ -662,10 +646,23 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
       }
 
       var filteredSelText = string.Concat(selRange.text
-                                          .Where(c => !Char.IsPunctuation(c)))
+                                          .Where(c => 
+                                                    c != '.'
+                                                 && c != '?'
+                                                 && c != '!'
+                                                 && c != ','))
                                   .Trim('\n', '\t', ' ', '\r');
 
-      // If language is null, it's a search results page
+      var result = await Forge.Forms.Show.Window()
+                                    .For(new Prompt<string> { Title = "Search Wiktionary:", Value = filteredSelText});
+
+      if (!result.Model.Confirmed)
+      {
+        return;
+      }
+
+      filteredSelText = result.Model.Value;
+
       if (string.IsNullOrEmpty(filteredSelText))
       {
         return;
@@ -696,8 +693,22 @@ namespace SuperMemoAssistant.Plugins.PopupWiki.UI
       }
 
       var filteredSelText = string.Concat(selRange.text
-                                          .Where(c => !Char.IsPunctuation(c)))
+                                          .Where(c => 
+                                                    c != '.'
+                                                 && c != '?'
+                                                 && c != '!'
+                                                 && c != ','))
                                   .Trim('\n', '\t', ' ', '\r');
+
+      var result = await Forge.Forms.Show.Window()
+                                    .For(new Prompt<string> { Title = "Find Wikipedia article:", Value = filteredSelText});
+
+      if (!result.Model.Confirmed)
+      {
+        return;
+      }
+
+      filteredSelText = result.Model.Value;
 
       if (string.IsNullOrEmpty(filteredSelText))
       {
