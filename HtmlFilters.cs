@@ -151,21 +151,24 @@ namespace SuperMemoAssistant.Plugins.PopupWiki
         doc.LoadHtml(html);
 
         var linkNodes = doc.DocumentNode.SelectNodes("//a[@href]");
-        foreach(var linkNode in linkNodes)
+        if (linkNodes != null)
         {
-          string href = linkNode.Attributes["href"].Value;
-          // Can't check if relative, fails if url contains #
-          if (!Uri.IsWellFormedUriString(href, UriKind.Absolute))
+          foreach(var linkNode in linkNodes)
           {
-            string absHref = WikiUrlUtils.ConvRelToAbsLink(baseUrl, href);
-            if (predicate(absHref))
+            string href = linkNode.Attributes["href"].Value;
+            // Can't check if relative, fails if url contains #
+            if (!Uri.IsWellFormedUriString(href, UriKind.Absolute))
             {
-              Console.WriteLine($"Conversion of relative link {href} to absolute link {absHref} succeeded");
-              linkNode.Attributes["href"].Value = absHref;
-            }
-            else
-            {
-              Console.WriteLine($"Conversion of relative link {href} to absolute link failed");
+              string absHref = WikiUrlUtils.ConvRelToAbsLink(baseUrl, href);
+              if (predicate(absHref))
+              {
+                Console.WriteLine($"Conversion of relative link {href} to absolute link {absHref} succeeded");
+                linkNode.Attributes["href"].Value = absHref;
+              }
+              else
+              {
+                Console.WriteLine($"Conversion of relative link {href} to absolute link failed");
+              }
             }
           }
         }
